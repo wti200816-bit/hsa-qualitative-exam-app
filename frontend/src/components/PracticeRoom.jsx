@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Check, X, Eye, EyeOff, Bot, ChevronLeft, ChevronRight, Sparkles, RefreshCw, PenTool, SearchCheck, Layers, FileText } from 'lucide-react';
+import { getPracticeCategories, getPracticeQuestions } from '../services/dataService';
 
-export default function PracticeRoom({ apiBase, onOpenAiChat }) {
+export default function PracticeRoom({ onOpenAiChat }) {
   const [categories, setCategories] = useState([]);
   const [selectedCat, setSelectedCat] = useState('TV1');
   const [questions, setQuestions] = useState([]);
@@ -16,32 +17,34 @@ export default function PracticeRoom({ apiBase, onOpenAiChat }) {
 
   // Load categories
   useEffect(() => {
-    fetch(`${apiBase}/api/practice/categories`)
-      .then((res) => res.json())
+    getPracticeCategories()
       .then((data) => {
-        setCategories(data);
-        if (data.length > 0) {
+        setCategories(data || []);
+        if (data && data.length > 0) {
           setSelectedCat(data[0].category);
         }
       })
       .catch((err) => console.error(err));
-  }, [apiBase]);
+  }, []);
 
   // Load questions when category changes
-  useEffect(() => {
+  const loadQuestions = () => {
     if (!selectedCat) return;
     setLoading(true);
-    fetch(`${apiBase}/api/practice/questions?category=${selectedCat}&limit=20`)
-      .then((res) => res.json())
+    getPracticeQuestions(selectedCat, 20)
       .then((data) => {
-        setQuestions(data.questions || []);
+        setQuestions(data || []);
         setCurrentIdx(0);
         setUserAnswers({});
         setShowExplanation({});
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
-  }, [selectedCat, apiBase]);
+  };
+
+  useEffect(() => {
+    loadQuestions();
+  }, [selectedCat]);
 
   const curQ = questions[currentIdx] || {};
 

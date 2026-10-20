@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>HSA Master - Ôn thi ĐGNL ĐHQGHN (Tư duy Định tính)</title>
+
+    <!-- SEO & Metadata -->
+    <meta name="description" content="Hệ thống trộn đề thông minh 50 câu/60 phút, có Gia sư AI giải thích chi tiết và Bảng vinh danh Thủ khoa. Vào luyện ngay!" />
+    <meta name="theme-color" content="#2563EB" />
+
+    <!-- Open Graph / Facebook / Zalo Preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="🎓 HSA Master - Luyện đề ĐGNL ĐHQGHN (Tư duy Định tính)" />
+    <meta property="og:description" content="Hệ thống trộn đề thông minh 50 câu/60 phút, có Gia sư AI giải thích chi tiết và Bảng vinh danh Thủ khoa. Vào luyện ngay!" />
+    <meta property="og:image" content="/icons.svg" />
+    <meta property="og:image:alt" content="HSA Master Logo" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="🎓 HSA Master - Luyện đề ĐGNL ĐHQGHN (Tư duy Định tính)" />
+    <meta name="twitter:description" content="Hệ thống trộn đề thông minh 50 câu/60 phút, có Gia sư AI giải thích chi tiết và Bảng vinh danh Thủ khoa. Vào luyện ngay!" />
+    <meta name="twitter:image" content="/icons.svg" />
+
+    <!-- PWA & Mobile Web App Meta -->
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./icons.svg" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="HSA Master" />
+    
+    <!-- Google Fonts: Plus Jakarta Sans, Be Vietnam Pro & Lora -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS with Gen-Z Edtech Vibrant Theme -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              page: '#F4F7FE',
+              brand: {
+                50: '#EEF2FF',
+                100: '#E0E7FF',
+                200: '#C7D2FE',
+                300: '#A5B4FC',
+                400: '#818CF8',
+                500: '#6366F1',
+                600: '#4F46E5', // Indigo
+                700: '#4338CA',
+                800: '#3730A3',
+                900: '#1E3A8A', // Deep Academic Blue
+                950: '#0F172A',
+              },
+              pop: {
+                blue: '#2563EB',
+                indigo: '#4F46E5',
+                violet: '#8B5CF6',
+                amber: '#F59E0B',
+                emerald: '#10B981',
+                rose: '#F43F5E',
+              }
+            },
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', '"Be Vietnam Pro"', 'sans-serif'],
+              serif: ['"Lora"', 'Georgia', 'serif'],
+            },
+            boxShadow: {
+              'soft': '0 10px 30px -5px rgba(37, 99, 235, 0.08)',
+              'glow-blue': '0 0 25px -5px rgba(37, 99, 235, 0.35)',
+              'glow-violet': '0 0 25px -5px rgba(139, 92, 246, 0.35)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #F4F7FE;
+      }
+      /* Custom tactile button press */
+      .btn-3d {
+        transition: all 0.1s ease-in-out;
+      }
+      .btn-3d:active {
+        transform: translateY(2px);
+      }
+      /* Custom modern scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #F1F5F9;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94A3B8;
+      }
+    </style>
+    <!-- Preloaded HSA Exam Bank Data -->
+    <script src="./data/hsa_data.js"></script>
+    <script type="module" crossorigin src="./assets/index-l-YhOjgK.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-I6cGQ-pn.css">
+  </head>
+  <body class="text-slate-800 antialiased selection:bg-brand-600 selection:text-white min-h-screen">
+    <div id="root"></div>
+  </body>
+</html>

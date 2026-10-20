@@ -7,10 +7,7 @@ import Leaderboard from './components/Leaderboard';
 import AdminDashboard from './components/AdminDashboard';
 import AiChatDrawer from './components/AiChatDrawer';
 import { Play, Sparkles, BookOpen, Clock, Award, ShieldCheck, ChevronRight, CheckCircle2, Flame, Target, Layers } from 'lucide-react';
-
-const API_BASE = typeof window !== 'undefined' && window.location.port === '5173'
-  ? 'http://localhost:8000'
-  : (typeof window !== 'undefined' ? window.location.origin : '');
+import { getTemplates, getTemplateExam, generateRandomExam, submitExam } from './services/dataService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('mock'); // 'mock' | 'practice' | 'result' | 'leaderboard' | 'admin'
@@ -28,8 +25,7 @@ export default function App() {
 
   // Load standardized exam templates
   useEffect(() => {
-    fetch(`${API_BASE}/api/templates`)
-      .then((res) => res.json())
+    getTemplates()
       .then((data) => setTemplates(data || []))
       .catch((err) => console.error('Error fetching templates:', err));
   }, []);
@@ -38,10 +34,7 @@ export default function App() {
   const handleStartRandomExam = async () => {
     setLoadingExam(true);
     try {
-      const res = await fetch(`${API_BASE}/api/exam/generate?student_name=${encodeURIComponent(studentName)}`, {
-        method: 'POST'
-      });
-      const data = await res.json();
+      const data = await generateRandomExam(studentName);
       setActiveExam(data);
       setActiveTab('mock');
     } catch (err) {
@@ -55,8 +48,7 @@ export default function App() {
   const handleStartTemplateExam = async (templateId) => {
     setLoadingExam(true);
     try {
-      const res = await fetch(`${API_BASE}/api/templates/${templateId}`);
-      const data = await res.json();
+      const data = await getTemplateExam(templateId);
       setActiveExam(data);
       setActiveTab('mock');
     } catch (err) {
@@ -69,15 +61,10 @@ export default function App() {
   // Submit Exam
   const handleSubmitExam = async (submissionPayload) => {
     try {
-      const res = await fetch(`${API_BASE}/api/exam/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          student_name: studentName,
-          ...submissionPayload
-        })
+      const result = await submitExam({
+        student_name: studentName,
+        ...submissionPayload
       });
-      const result = await res.json();
       setActiveExam(null);
       setExamResult(result);
       setActiveTab('result');

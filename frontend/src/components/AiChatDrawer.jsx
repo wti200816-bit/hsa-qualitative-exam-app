@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Bot, Sparkles, BookOpen, CheckCircle, HelpCircle, MessageSquare } from 'lucide-react';
+import { X, Send, Bot, Sparkles, BookOpen, CheckCircle, HelpCircle, MessageSquare, Key, Settings } from 'lucide-react';
+import { askAiTutor } from '../services/dataService';
 
-export default function AiChatDrawer({ isOpen, onClose, questionContext, apiBase }) {
+export default function AiChatDrawer({ isOpen, onClose, questionContext }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState(() => localStorage.getItem('hsa_gemini_api_key') || '');
   const messagesEndRef = useRef(null);
 
   // Initialize or reset chat when opening a new question context
@@ -38,25 +41,22 @@ export default function AiChatDrawer({ isOpen, onClose, questionContext, apiBase
     setLoading(true);
 
     try {
-      const res = await fetch(`${apiBase}/api/ai-tutor/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          mode: 'practice',
-          question_context: questionContext
-        })
-      });
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: 'ai', text: data.reply }]);
+      const reply = await askAiTutor(text, questionContext);
+      setMessages((prev) => [...prev, { role: 'ai', text: reply }]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: 'ai', text: 'Có lỗi xảy ra khi kết nối tới Trợ lý AI. Vui lòng thử lại sau.' }
+        { role: 'ai', text: 'Có lỗi xảy ra khi phân tích: ' + (err.message || 'Vui lòng thử lại.') }
       ]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveApiKey = () => {
+    localStorage.setItem('hsa_gemini_api_key', apiKeyInput.trim());
+    setApiKeyModalOpen(false);
+    alert('Đã lưu cấu hình Gemini API Key thành công!');
   };
 
   const quickPrompts = [
@@ -88,13 +88,22 @@ export default function AiChatDrawer({ isOpen, onClose, questionContext, apiBase
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition"
-            title="Đóng cửa sổ chat"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setApiKeyModalOpen(true)}
+              className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition"
+              title="Cài đặt Gemini API Key"
+            >
+              <Key className="w-4 h-4 text-amber-300" />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition"
+              title="Đóng cửa sổ chat"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Question Context Preview Banner */}
@@ -204,6 +213,50 @@ export default function AiChatDrawer({ isOpen, onClose, questionContext, apiBase
             <Send className="w-4 h-4" />
           </button>
         </div>
+
+        {/* API Key Settings Modal */}
+        {apiKeyModalOpen && (
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 animate-in zoom-in-95">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Key className="w-4 h-4 text-amber-500" />
+                  <h4 className="font-bold text-sm text-slate-900">Cấu hình Google Gemini API Key</h4>
+                </div>
+                <button
+                  onClick={() => setApiKeyModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed mb-3">
+                Nhập Gemini API Key miễn phí từ Google AI Studio (aistudio.google.com) để kích hoạt mô hình Gemini 2.5 Flash trả lời phân tích chuyên sâu không giới hạn.
+              </p>
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="AIzaSy..."
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setApiKeyModalOpen(false)}
+                  className="flex-1 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl"
+                >
+                  Đóng
+                </button>
+                <button
+                  onClick={handleSaveApiKey}
+                  className="flex-1 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs"
+                >
+                  Lưu cấu hình
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

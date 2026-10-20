@@ -22,6 +22,8 @@ DGNL_CHUAN_HOA/
 !frontend/package.json
 !frontend/package-lock.json
 !frontend/public/manifest.json
+!frontend/public/data/**
+!docs/**
 push_to_github.py
 
 # Logs

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Award, Trophy, Medal, Zap, Clock, UserCheck, Flame, ArrowUpRight, Crown, Sparkles, Share2, Check } from 'lucide-react';
+import { getLeaderboard } from '../services/dataService';
 
-export default function Leaderboard({ apiBase, studentName }) {
+export default function Leaderboard({ studentName }) {
   const [tab, setTab] = useState('mock'); // 'mock' | 'stats'
   const [timeframe, setTimeframe] = useState('all'); // 'week' | 'month' | 'all'
   const [leaderboard, setLeaderboard] = useState([]);
@@ -37,14 +38,15 @@ export default function Leaderboard({ apiBase, studentName }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${apiBase}/api/leaderboard?tab=${tab}&timeframe=${timeframe}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setLeaderboard(data.leaderboard || []);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [tab, timeframe, apiBase]);
+    try {
+      const data = getLeaderboard(tab, timeframe);
+      setLeaderboard(data.leaderboard || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [tab, timeframe]);
 
   const top1 = leaderboard[0];
   const top2 = leaderboard[1];

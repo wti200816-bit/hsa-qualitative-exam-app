@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, CheckCircle2, AlertCircle, Sparkles, Upload, Search, Filter, Edit3, Save } from 'lucide-react';
+import { getAdminQuestions, adminVerifyQuestion } from '../services/dataService';
 
-export default function AdminDashboard({ apiBase }) {
+export default function AdminDashboard() {
   const [questions, setQuestions] = useState([]);
   const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0 });
   const [filterCat, setFilterCat] = useState('');
@@ -14,13 +15,13 @@ export default function AdminDashboard({ apiBase }) {
 
   const loadData = () => {
     setLoading(true);
-    let url = `${apiBase}/api/admin/questions?limit=50`;
-    if (filterCat) url += `&category=${filterCat}`;
-    if (filterStatus) url += `&status=${filterStatus}`;
-    if (search) url += `&search=${encodeURIComponent(search)}`;
-
-    fetch(url)
-      .then((res) => res.json())
+    getAdminQuestions({
+      limit: 50,
+      offset: 0,
+      category: filterCat,
+      status: filterStatus,
+      search: search
+    })
       .then((data) => {
         setQuestions(data.questions || []);
         if (data.stats) setStats(data.stats);
@@ -31,19 +32,15 @@ export default function AdminDashboard({ apiBase }) {
 
   useEffect(() => {
     loadData();
-  }, [filterCat, filterStatus, apiBase]);
+  }, [filterCat, filterStatus]);
 
   const handleVerify = async (qId, answer, explanation) => {
     try {
-      await fetch(`${apiBase}/api/admin/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question_id: qId,
-          correct_answer: answer,
-          explanation: explanation,
-          status: 'verified'
-        })
+      await adminVerifyQuestion({
+        question_id: qId,
+        correct_answer: answer,
+        explanation: explanation,
+        status: 'verified'
       });
       setEditingId(null);
       loadData();
