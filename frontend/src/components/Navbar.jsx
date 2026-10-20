@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { BookOpen, Award, CheckCircle2, ShieldCheck, User, Sparkles, Menu, X, Flame, QrCode, Share2, BarChart3 } from 'lucide-react';
+import { BookOpen, Award, CheckCircle2, ShieldCheck, User, Sparkles, Menu, X, Flame, QrCode, Share2, BarChart3, Smartphone, Download } from 'lucide-react';
 import ShareModal from './ShareModal';
+import InstallAppModal from './InstallAppModal';
 
-export default function Navbar({ activeTab, setActiveTab, studentName, setStudentName, isExamActive }) {
+export default function Navbar({ activeTab, setActiveTab, studentName, setStudentName, isExamActive, onOpenInstallModal }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [installModalOpenInternal, setInstallModalOpenInternal] = useState(false);
   const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(studentName || 'HSA')}&backgroundColor=e0e7ff,c7d2fe`;
+
+  const handleOpenInstall = () => {
+    if (onOpenInstallModal) {
+      onOpenInstallModal();
+    } else {
+      setInstallModalOpenInternal(true);
+    }
+  };
 
   const navItems = [
     { id: 'mock', label: 'Thi thử (50 câu)', icon: CheckCircle2, badge: 'HSA 2026' },
@@ -66,8 +76,17 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
             })}
           </nav>
 
-          {/* Student Profile Avatar, Streak & Share */}
+          {/* Student Profile Avatar, Streak, Share & Install App */}
           <div className="hidden sm:flex items-center gap-2.5">
+            <button
+              onClick={handleOpenInstall}
+              className="btn-3d flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
+              title="Cài đặt App HSA Master về điện thoại"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>📲 Cài App</span>
+            </button>
+
             <button
               onClick={() => setShareModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-indigo-50/80 hover:bg-indigo-100/90 text-indigo-700 font-bold text-xs border border-indigo-200 shadow-2xs hover:scale-105 active:scale-95 transition-all"
@@ -98,8 +117,15 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu & Quick Install Button */}
           <div className="flex md:hidden items-center gap-2">
+            <button
+              onClick={handleOpenInstall}
+              className="btn-3d flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-[11px] shadow-xs active:scale-95"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Cài App</span>
+            </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
@@ -112,6 +138,17 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-3 border-t border-slate-100 flex flex-col space-y-2 animate-in slide-in-from-top-2">
+            <button
+              onClick={() => {
+                handleOpenInstall();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-black bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition"
+            >
+              <Smartphone className="w-4 h-4 text-emerald-600" />
+              <span>📲 Cài đặt App về Điện thoại</span>
+            </button>
+
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -158,6 +195,9 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
 
       {/* Share & QR Code Modal */}
       <ShareModal isOpen={shareModalOpen} onClose={() => setShareModalOpen(false)} />
+
+      {/* Install App Modal */}
+      <InstallAppModal isOpen={installModalOpenInternal} onClose={() => setInstallModalOpenInternal(false)} />
     </header>
   );
 }

@@ -2,21 +2,30 @@
   "name": "HSA Master - Ôn thi ĐGNL ĐHQGHN",
   "short_name": "HSA Master",
   "description": "Luyện đề ĐGNL ĐHQGHN (HSA) - Phần Tư duy Định tính (Ngôn ngữ & Văn học)",
-  "start_url": "/",
+  "id": "hsa-master-app",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F4F7FE",
   "theme_color": "#2563EB",
+  "categories": ["education", "books"],
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons.svg",
-      "sizes": "192x192 512x512",
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons.svg",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }

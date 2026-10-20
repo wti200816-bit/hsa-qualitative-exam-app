@@ -23,11 +23,22 @@
     <!-- PWA & Mobile Web App Meta -->
     <link rel="manifest" href="./manifest.json" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="apple-touch-icon" href="./icons.svg" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="HSA Master" />
+    
+    <!-- Register PWA Service Worker for Offline & Installable App -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('./sw.js').catch(function(err) {
+            console.log('SW registration note:', err);
+          });
+        });
+      }
+    </script>
     
     <!-- Google Fonts: Plus Jakarta Sans, Be Vietnam Pro & Lora -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -128,7 +139,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <!-- Preloaded HSA Exam Bank Data -->
     <script src="./data/hsa_data.js"></script>
-    <script type="module" crossorigin src="./assets/index-BFZaI4yO.js"></script>
+    <script type="module" crossorigin src="./assets/index-DWEMDPvv.js"></script>
   </head>
   <body class="text-slate-800 antialiased selection:bg-brand-600 selection:text-white min-h-screen">
     <div id="root"></div>

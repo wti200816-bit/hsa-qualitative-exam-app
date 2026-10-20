@@ -7,7 +7,8 @@ import Leaderboard from './components/Leaderboard';
 import AdminDashboard from './components/AdminDashboard';
 import AiChatDrawer from './components/AiChatDrawer';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
-import { Play, Sparkles, BookOpen, Clock, Award, ShieldCheck, ChevronRight, CheckCircle2, Flame, Target, Layers } from 'lucide-react';
+import InstallAppModal from './components/InstallAppModal';
+import { Play, Sparkles, BookOpen, Clock, Award, ShieldCheck, ChevronRight, CheckCircle2, Flame, Target, Layers, Smartphone, Download } from 'lucide-react';
 import { getTemplates, getTemplateExam, generateRandomExam, submitExam } from './services/dataService';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
   const [studentName, setStudentName] = useState('Thí sinh HSA');
   const [templates, setTemplates] = useState([]);
   const [loadingExam, setLoadingExam] = useState(false);
+  const [installModalOpen, setInstallModalOpen] = useState(false);
   
   // Active Exam state
   const [activeExam, setActiveExam] = useState(null);
@@ -88,6 +90,7 @@ export default function App() {
         studentName={studentName}
         setStudentName={setStudentName}
         isExamActive={!!activeExam}
+        onOpenInstallModal={() => setInstallModalOpen(true)}
       />
 
       <main className="flex-1">
@@ -166,6 +169,31 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Mobile App Download & Install CTA Banner */}
+              <div className="mb-8 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-indigo-50 border-2 border-emerald-200/80 shadow-soft flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                      <span>Tải App "HSA Master" Về Điện Thoại</span>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">Cài đặt 1 chạm</span>
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Cài trực tiếp vào iPhone & Android để làm bài toàn màn hình, mượt mà và không tốn bộ nhớ máy.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setInstallModalOpen(true)}
+                  className="btn-3d flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-md shadow-emerald-500/25 active:scale-95 transition whitespace-nowrap self-stretch sm:self-auto justify-center"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>📲 Cài đặt App ngay</span>
+                </button>
               </div>
 
               {/* Standardized Exam Templates Header */}
@@ -266,6 +294,12 @@ export default function App() {
         isOpen={aiChatOpen}
         onClose={() => setAiChatOpen(false)}
         questionContext={chatQuestionContext}
+      />
+
+      {/* Install Mobile App Modal */}
+      <InstallAppModal
+        isOpen={installModalOpen}
+        onClose={() => setInstallModalOpen(false)}
       />
     </div>
   );
