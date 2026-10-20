@@ -118,8 +118,6 @@ def get_template_exam(template_id):
     return {
         "exam_id": tpl["id"],
         "title": tpl["title"],
-        "teacher_info": tpl["teacher_info"],
-        "source_file": tpl["source_file"],
         "total_questions": len(qs),
         "duration_minutes": 60,
         "questions": [dict(r) for r in qs]

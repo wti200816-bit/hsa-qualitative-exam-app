@@ -179,13 +179,7 @@ export default function App() {
                         {tpl.title}
                       </h3>
 
-                      {tpl.teacher_info && (
-                        <p className="text-xs text-slate-500 line-clamp-1 mb-3 italic">
-                          Biên soạn: {tpl.teacher_info}
-                        </p>
-                      )}
-
-                      <div className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                      <div className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100 mb-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>Đầy đủ 50 câu + Lời giải chi tiết</span>
                       </div>

@@ -53,7 +53,7 @@ def list_exam_templates():
     conn = get_db()
     c = conn.cursor()
     rows = c.execute("""
-        SELECT id, exam_num, title, teacher_info, source_file, total_questions
+        SELECT id, exam_num, title, source_file, total_questions
         FROM exam_templates
         ORDER BY exam_num ASC
     """).fetchall()
