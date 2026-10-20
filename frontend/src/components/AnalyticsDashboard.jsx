@@ -17,58 +17,24 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 
-// Seed Authentic Student Testimonials
-const DEFAULT_TESTIMONIALS = [
-  {
-    id: 1,
-    name: 'Trần Thu Hà',
-    role: 'Học sinh Lớp 12A1',
-    school: 'THPT Chuyên Hà Nội - Amsterdam',
-    rating: 5,
-    date: '18/10/2026',
-    comment: 'Phần chia đôi màn hình đọc hiểu rất tuyệt vời! Mình vừa đối chiếu ngữ liệu bên trái vừa làm câu hỏi con bên phải, không bị trôi mất mạch ý của bài như các phần mềm thi khác.'
-  },
-  {
-    id: 2,
-    name: 'Nguyễn Đức Mạnh',
-    role: 'Học sinh Lớp 12 Chuyên Văn',
-    school: 'THPT Chu Văn An (Hà Nội)',
-    rating: 5,
-    date: '16/10/2026',
-    comment: 'Mỗi khi làm sai câu Tiếng Việt, bấm "Hỏi Gia sư AI câu này" là được giải thích cặn kẽ từ loại, trường nghĩa và cấu tạo từ ghép. Kiến thức ngấm sâu hơn hẳn việc chỉ nhìn mỗi chữ cái đáp án.'
-  },
-  {
-    id: 3,
-    name: 'Lê Hoàng Nam',
-    role: 'Thí sinh tự do',
-    school: 'Ôn thi HSA 2026',
-    rating: 5,
-    date: '15/10/2026',
-    comment: 'Bộ 50 đề chuẩn ma trận HSA ĐHQGHN với đồng hồ 60 phút giúp mình rèn kỹ năng phân bổ thời gian. Sau 3 tuần luyện trên web, điểm của mình từ 29 đã bứt phá lên 42.5/50 điểm!'
-  },
-  {
-    id: 4,
-    name: 'Cô Nguyễn Mai Phương',
-    role: 'Giáo viên Ngữ văn',
-    school: 'Tổ trưởng Chuyên môn THPT',
-    rating: 5,
-    date: '12/10/2026',
-    comment: 'Công cụ hỗ trợ dạy học tuyệt vời cho giáo viên! Báo cáo thống kê năng lực chỉ rõ học sinh lớp tôi đang mất điểm nhiều ở dạng TV3 (nhận diện lỗi sai), giúp tôi kịp thời bổ trợ bài giảng trên lớp.'
-  }
-];
-
 export default function AnalyticsDashboard({ studentName }) {
   const lineChartRef = useRef(null);
   const barChartRef = useRef(null);
   const chartInstances = useRef({ line: null, bar: null });
 
-  // Reviews State
+  // Reviews State - Only real user submissions from localStorage
   const [feedbacks, setFeedbacks] = useState(() => {
     try {
       const saved = localStorage.getItem('hsa_student_feedbacks');
-      return saved ? JSON.parse(saved) : DEFAULT_TESTIMONIALS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Clean out any legacy mock reviews (id <= 10 or specific mock names)
+        const realOnly = parsed.filter(f => f && f.id > 1000 && !['Trần Thu Hà', 'Nguyễn Đức Mạnh', 'Lê Hoàng Nam', 'Cô Nguyễn Mai Phương'].includes(f.name));
+        return realOnly;
+      }
+      return [];
     } catch (e) {
-      return DEFAULT_TESTIMONIALS;
+      return [];
     }
   });
 
@@ -86,6 +52,16 @@ export default function AnalyticsDashboard({ studentName }) {
     try {
       const subs = JSON.parse(localStorage.getItem('hsa_submissions') || '[]');
       setLocalAttempts(subs.length);
+
+      const saved = localStorage.getItem('hsa_student_feedbacks');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const realOnly = parsed.filter(f => f && f.id > 1000 && !['Trần Thu Hà', 'Nguyễn Đức Mạnh', 'Lê Hoàng Nam', 'Cô Nguyễn Mai Phương'].includes(f.name));
+        if (realOnly.length !== parsed.length) {
+          localStorage.setItem('hsa_student_feedbacks', JSON.stringify(realOnly));
+          setFeedbacks(realOnly);
+        }
+      }
     } catch (e) {
       console.error(e);
     }
@@ -390,24 +366,28 @@ export default function AnalyticsDashboard({ studentName }) {
           </p>
         </div>
 
-        {/* KPI 4 */}
+        {/* KPI 4: CSAT Rating */}
         <div className="bg-white rounded-3xl p-6 border-2 border-slate-200/80 shadow-soft hover:-translate-y-1 transition duration-200">
           <div className="flex items-center justify-between mb-3">
             <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-500">
               <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
             </div>
             <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-              98.4% Hài lòng
+              {feedbacks.length > 0 ? `${Math.round((feedbacks.filter(f => f.rating >= 4).length / feedbacks.length) * 100)}% Hài lòng` : 'Sẵn sàng tiếp nhận'}
             </span>
           </div>
           <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-            4.92 <span className="text-amber-500 text-2xl">★</span>
+            {feedbacks.length > 0 
+              ? (feedbacks.reduce((acc, f) => acc + f.rating, 0) / feedbacks.length).toFixed(1)
+              : '5.0'} <span className="text-amber-500 text-2xl">★</span>
           </div>
           <div className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">
-            Mức độ hài lòng của Học sinh
+            Mức độ hài lòng của Người học
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
-            Đánh giá thực tế từ {feedbacks.length * 90 + 68} phiếu khảo sát trực tiếp sau khi thi thử.
+            {feedbacks.length > 0 
+              ? `Tính từ ${feedbacks.length} phiếu đánh giá thực tế của học sinh & giáo viên.`
+              : 'Cổng tiếp nhận đánh giá trực tiếp từ người dùng đang hoạt động.'}
           </p>
         </div>
       </div>
@@ -494,40 +474,54 @@ export default function AnalyticsDashboard({ studentName }) {
           </div>
         </div>
 
-        {/* Testimonials Bento Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {feedbacks.map((f) => (
-            <div 
-              key={f.id}
-              className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 hover:bg-white hover:shadow-md transition duration-200 flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
-                      {f.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-extrabold text-slate-900 leading-tight">{f.name}</h4>
-                      <p className="text-[11px] font-semibold text-slate-500">{f.role} • {f.school}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-0.5 text-amber-400">
-                    {[...Array(f.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-amber-400" />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-xs text-slate-700 leading-relaxed italic font-serif">
-                  "{f.comment}"
-                </p>
-              </div>
-              <div className="text-[10px] font-bold text-slate-400 mt-3 text-right">
-                Đã gửi ngày {f.date}
-              </div>
+        {/* Testimonials Bento Cards / Empty State */}
+        {feedbacks.length === 0 ? (
+          <div className="text-center py-12 px-4 rounded-2xl bg-slate-50/70 border-2 border-dashed border-slate-200 mb-8">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-3 shadow-xs">
+              <MessageSquare className="w-7 h-7" />
             </div>
-          ))}
-        </div>
+            <h4 className="text-base font-extrabold text-slate-800 mb-1">
+              Chưa có đánh giá nào được gửi
+            </h4>
+            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+              Bạn vừa hoàn thành lượt thi thử hoặc trải nghiệm giải đề cùng Gia sư AI? Hãy là người đầu tiên chia sẻ cảm nhận chân thực ở biểu mẫu phía dưới nhé!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {feedbacks.map((f) => (
+              <div 
+                key={f.id}
+                className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 hover:bg-white hover:shadow-md transition duration-200 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
+                        {f.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-extrabold text-slate-900 leading-tight">{f.name}</h4>
+                        <p className="text-[11px] font-semibold text-slate-500">{f.role} {f.school ? `• ${f.school}` : ''}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-0.5 text-amber-400">
+                      {[...Array(f.rating)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 fill-amber-400" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed italic font-serif">
+                    "{f.comment}"
+                  </p>
+                </div>
+                <div className="text-[10px] font-bold text-slate-400 mt-3 text-right">
+                  Đã gửi ngày {f.date}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Add Review Form (No print) */}
         <div className="no-print bg-gradient-to-br from-indigo-50/70 to-blue-50/70 rounded-2xl p-5 border border-indigo-100">
