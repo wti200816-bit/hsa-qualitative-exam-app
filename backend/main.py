@@ -259,6 +259,7 @@ def get_leaderboard(tab: str = Query("mock"), timeframe: str = Query("all")):
 
 # 5. Context-Aware AI Tutor Chat
 @app.post("/api/ai/chat")
+@app.post("/api/ai-tutor/chat")
 def ai_chat_endpoint(req: AIChatRequest):
     # Anti-cheat check: strictly lock AI tutor during mock exam
     if req.mode == "mock_exam":

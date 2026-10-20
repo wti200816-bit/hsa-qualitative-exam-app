@@ -137,10 +137,10 @@ export default function PracticeRoom({ apiBase, onOpenAiChat }) {
                     </span>
                     <button
                       onClick={handleAskAi}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white shadow-sm transition"
+                      className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-800 to-brand-900 hover:from-brand-900 hover:to-brand-950 text-white shadow-sm transition"
                     >
-                      <Bot className="w-3.5 h-3.5 text-brand-200" />
-                      <span>Hỏi AI câu này</span>
+                      <Bot className="w-3.5 h-3.5 text-brand-300" />
+                      <span>✨ Hỏi Gia sư AI câu này</span>
                     </button>
                   </div>
 
@@ -250,10 +250,10 @@ export default function PracticeRoom({ apiBase, onOpenAiChat }) {
                   </div>
                   <button
                     onClick={handleAskAi}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white shadow-sm transition"
+                    className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-800 to-brand-900 hover:from-brand-900 hover:to-brand-950 text-white shadow-sm transition"
                   >
-                    <Bot className="w-3.5 h-3.5 text-brand-200" />
-                    <span>Hỏi AI câu này</span>
+                    <Bot className="w-3.5 h-3.5 text-brand-300" />
+                    <span>✨ Hỏi Gia sư AI câu này</span>
                   </button>
                 </div>
 

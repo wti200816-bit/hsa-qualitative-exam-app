@@ -152,10 +152,14 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
                     user_answer: r.user_choice
                   })
                 }
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 transition"
+                className={`flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl transition shadow-xs ${
+                  !r.is_correct
+                    ? 'bg-gradient-to-r from-brand-700 to-brand-900 hover:from-brand-800 hover:to-brand-950 text-white ring-2 ring-brand-300'
+                    : 'bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200'
+                }`}
               >
-                <Bot className="w-3.5 h-3.5 text-brand-600" />
-                <span>Hỏi AI câu này</span>
+                <Bot className="w-3.5 h-3.5 text-brand-300" />
+                <span>✨ Hỏi Gia sư AI câu này</span>
               </button>
             </div>
 

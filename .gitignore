@@ -6,6 +6,9 @@ tools/
 .venv/
 __pycache__/
 *.pyc
+.env
+*.env
+!.env.example
 
 # Raw user data & heavy documents
 TAI LIEU ME LAN/
