@@ -104,10 +104,31 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #94A3B8;
       }
+      /* Print layout styles */
+      @media print {
+        header, nav, .no-print, button {
+          display: none !important;
+        }
+        body {
+          background-color: #ffffff !important;
+        }
+        .print-full {
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+        }
+        .page-break {
+          page-break-before: always;
+        }
+      }
     </style>
+    <!-- Chart.js UMD for Analytics Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <!-- Preloaded HSA Exam Bank Data -->
     <script src="./data/hsa_data.js"></script>
-    <script type="module" crossorigin src="./assets/index-ByC3Uo-M.js"></script>
+    <script type="module" crossorigin src="./assets/index-D30Yldzl.js"></script>
   </head>
   <body class="text-slate-800 antialiased selection:bg-brand-600 selection:text-white min-h-screen">
     <div id="root"></div>

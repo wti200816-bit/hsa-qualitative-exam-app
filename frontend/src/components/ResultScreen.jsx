@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Award, CheckCircle2, XCircle, Timer, RotateCcw, Bot, BookOpen, Sparkles, Trophy, ArrowRight, Share2, Copy, Check } from 'lucide-react';
+import { Award, CheckCircle2, XCircle, Timer, RotateCcw, Bot, BookOpen, Sparkles, Trophy, ArrowRight, Share2, Copy, Check, BarChart3, MessageSquare } from 'lucide-react';
 
-export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboard, onOpenAiChat }) {
+export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboard, onViewAnalytics, onOpenAiChat }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'correct' | 'incorrect'
   const [challengeCopied, setChallengeCopied] = useState(false);
 
@@ -132,6 +132,13 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
             <Trophy className="w-4 h-4 text-amber-300" />
             <span>Xem Bảng Vinh Danh</span>
           </button>
+          <button
+            onClick={onViewAnalytics}
+            className="btn-3d flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-600/80 hover:bg-emerald-600 border-2 border-emerald-400/40 text-white font-extrabold text-xs sm:text-sm shadow-md"
+          >
+            <BarChart3 className="w-4 h-4 text-emerald-200" />
+            <span>Báo cáo Tác động AI</span>
+          </button>
         </div>
         {challengeCopied && (
           <div className="mt-3 text-xs font-bold text-amber-200 flex items-center gap-1.5 animate-in fade-in">
@@ -139,6 +146,30 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
             <span>🔥 Đã copy lời thách đấu kèm link bài thi! Hãy dán vào nhóm Zalo hoặc Facebook để đọ điểm cùng bạn bè nhé!</span>
           </div>
         )}
+      </div>
+
+      {/* Student Feedback & AI Experience CTA Banner */}
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50 border-2 border-indigo-200/80 rounded-3xl p-5 mb-8 shadow-soft flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center shrink-0 shadow-md">
+            <MessageSquare className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-extrabold text-indigo-950 flex items-center gap-2">
+              <span>Đánh giá trải nghiệm học tập cùng Gia sư AI</span>
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Dự thi 2026</span>
+            </h4>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Bạn thấy đề thi và Gia sư AI phân tích thế nào? Đóng góp ý kiến để hoàn thiện hồ sơ dự thi sáng tạo AI nhé!
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onViewAnalytics}
+          className="btn-3d flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs whitespace-nowrap shadow-md shadow-indigo-500/20 active:scale-95 transition"
+        >
+          <span>⭐ Viết cảm nhận & Xem thống kê</span>
+        </button>
       </div>
 
       {/* Filter Chips Bar */}
