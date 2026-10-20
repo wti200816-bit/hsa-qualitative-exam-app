@@ -227,7 +227,7 @@ export default function App() {
 
         {/* TAB 2: PRACTICE */}
         {activeTab === 'practice' && (
-          <PracticeRoom apiBase={API_BASE} onOpenAiChat={handleOpenAiChat} />
+          <PracticeRoom onOpenAiChat={handleOpenAiChat} />
         )}
 
         {/* TAB 3: RESULT SCREEN */}
@@ -245,12 +245,12 @@ export default function App() {
 
         {/* TAB 4: LEADERBOARD */}
         {activeTab === 'leaderboard' && (
-          <Leaderboard apiBase={API_BASE} studentName={studentName} />
+          <Leaderboard studentName={studentName} />
         )}
 
         {/* TAB 5: ADMIN DASHBOARD */}
         {activeTab === 'admin' && (
-          <AdminDashboard apiBase={API_BASE} />
+          <AdminDashboard />
         )}
       </main>
 
@@ -259,7 +259,6 @@ export default function App() {
         isOpen={aiChatOpen}
         onClose={() => setAiChatOpen(false)}
         questionContext={chatQuestionContext}
-        apiBase={API_BASE}
       />
     </div>
   );
