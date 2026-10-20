@@ -173,9 +173,10 @@ export default function ExamRoom({ examData, onSubmitExam, onCancel }) {
                 </div>
 
                 {/* Text Body with Lora Serif */}
-                <div className={`flex-1 overflow-y-auto pr-2 font-serif leading-relaxed whitespace-pre-line select-text ${fontSize}`}>
-                  {curQ.passage_content}
-                </div>
+                <div 
+                  className={`flex-1 overflow-y-auto pr-2 font-serif leading-relaxed whitespace-pre-line select-text ${fontSize}`}
+                  dangerouslySetInnerHTML={{ __html: curQ.passage_content }}
+                />
 
                 <div className="pt-2.5 mt-2 border-t border-current/10 text-[11px] text-slate-500 flex justify-between items-center">
                   <span>📖 {curQ.passage_content.split(/\s+/).length} từ</span>
@@ -203,9 +204,10 @@ export default function ExamRoom({ examData, onSubmitExam, onCancel }) {
                     </button>
                   </div>
 
-                  <p className="text-sm font-bold text-slate-900 mb-5 leading-relaxed whitespace-pre-line font-sans">
-                    {curQ.content}
-                  </p>
+                  <div 
+                    className="text-sm font-bold text-slate-900 mb-5 leading-relaxed whitespace-pre-line font-sans"
+                    dangerouslySetInnerHTML={{ __html: curQ.content }}
+                  />
 
                   {/* 3D Tactile Options A, B, C, D */}
                   <div className="space-y-3">
@@ -288,9 +290,10 @@ export default function ExamRoom({ examData, onSubmitExam, onCancel }) {
                   </button>
                 </div>
 
-                <p className="text-base sm:text-lg font-bold text-slate-900 mb-7 leading-relaxed whitespace-pre-line">
-                  {curQ.content}
-                </p>
+                <div 
+                  className="text-base sm:text-lg font-bold text-slate-900 mb-7 leading-relaxed whitespace-pre-line"
+                  dangerouslySetInnerHTML={{ __html: curQ.content }}
+                />
 
                 {/* 3D Tactile Options */}
                 <div className="space-y-3.5">

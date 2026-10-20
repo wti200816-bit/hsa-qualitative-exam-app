@@ -187,9 +187,10 @@ export default function PracticeRoom({ onOpenAiChat }) {
                   </div>
                 </div>
 
-                <div className={`flex-1 overflow-y-auto pr-2 font-serif leading-relaxed whitespace-pre-line select-text ${fontSize}`}>
-                  {curQ.passage_content}
-                </div>
+                <div 
+                  className={`flex-1 overflow-y-auto pr-2 font-serif leading-relaxed whitespace-pre-line select-text ${fontSize}`}
+                  dangerouslySetInnerHTML={{ __html: curQ.passage_content }}
+                />
               </div>
 
               {/* Right: Question, Options & AI Button */}
@@ -210,9 +211,10 @@ export default function PracticeRoom({ onOpenAiChat }) {
                     </button>
                   </div>
 
-                  <p className="text-sm font-bold text-slate-900 mb-4 leading-relaxed whitespace-pre-line">
-                    {curQ.content}
-                  </p>
+                  <div 
+                    className="text-sm font-bold text-slate-900 mb-4 leading-relaxed whitespace-pre-line"
+                    dangerouslySetInnerHTML={{ __html: curQ.content }}
+                  />
 
                   {/* 3D Options */}
                   <div className="space-y-2.5">
@@ -323,9 +325,10 @@ export default function PracticeRoom({ onOpenAiChat }) {
                   </button>
                 </div>
 
-                <p className="text-base sm:text-lg font-bold text-slate-900 mb-6 leading-relaxed whitespace-pre-line">
-                  {curQ.content}
-                </p>
+                <div 
+                  className="text-base sm:text-lg font-bold text-slate-900 mb-6 leading-relaxed whitespace-pre-line"
+                  dangerouslySetInnerHTML={{ __html: curQ.content }}
+                />
 
                 {/* 3D Tactile Options */}
                 <div className="space-y-3.5">

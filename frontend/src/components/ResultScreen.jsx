@@ -226,14 +226,16 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
 
             {/* Passage quote if present */}
             {r.passage_content && (
-              <div className="mb-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 italic font-serif line-clamp-3">
-                "{r.passage_content}"
-              </div>
+              <div 
+                className="mb-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 italic font-serif line-clamp-3"
+                dangerouslySetInnerHTML={{ __html: r.passage_content }}
+              />
             )}
 
-            <p className="text-sm sm:text-base font-bold text-slate-900 mb-4 whitespace-pre-line leading-relaxed font-sans">
-              {r.content}
-            </p>
+            <div 
+              className="text-sm sm:text-base font-bold text-slate-900 mb-4 whitespace-pre-line leading-relaxed font-sans"
+              dangerouslySetInnerHTML={{ __html: r.content }}
+            />
 
             {/* 4 Options Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs sm:text-sm">
