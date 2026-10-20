@@ -20,6 +20,8 @@ DGNL_CHUAN_HOA/
 # Temporary json payloads
 *.json
 !frontend/package.json
+!frontend/package-lock.json
+!frontend/public/manifest.json
 push_to_github.py
 
 # Logs

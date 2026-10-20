@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Award, CheckCircle2, XCircle, Timer, RotateCcw, Bot, BookOpen, Sparkles, Trophy, ArrowRight } from 'lucide-react';
+import { Award, CheckCircle2, XCircle, Timer, RotateCcw, Bot, BookOpen, Sparkles, Trophy, ArrowRight, Share2, Copy, Check } from 'lucide-react';
 
 export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboard, onOpenAiChat }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'correct' | 'incorrect'
+  const [challengeCopied, setChallengeCopied] = useState(false);
 
   const score = resultData.score || 0;
   const total = resultData.total_questions || 50;
@@ -14,6 +15,31 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
   const m = Math.floor(timeSpent / 60);
   const s = timeSpent % 60;
   const formattedTime = `${m} phút ${s} giây`;
+
+  const handleShareChallenge = async () => {
+    const currentUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareText = `🎉 Mình vừa đạt ${score}/${total} điểm (${percentage}%) trong ${formattedTime} tại HSA Master (ĐGNL ĐHQGHN)! Đố bạn vượt qua kỷ lục của mình tại: ${currentUrl}`;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareText);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
+      setChallengeCopied(true);
+      setTimeout(() => setChallengeCopied(false), 3500);
+    } catch (err) {
+      console.error(err);
+      prompt('Sao chép lời thách đấu bên dưới:', shareText);
+    }
+  };
 
   // Trigger celebratory confetti if score >= 35
   useEffect(() => {
@@ -86,6 +112,13 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
         {/* Action Buttons */}
         <div className="mt-8 pt-6 border-t border-white/15 flex flex-wrap items-center justify-center sm:justify-start gap-3">
           <button
+            onClick={handleShareChallenge}
+            className="btn-3d flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 hover:from-amber-300 hover:to-amber-400 text-slate-900 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/30 active:scale-95 transition"
+          >
+            {challengeCopied ? <Check className="w-4 h-4 text-emerald-950" /> : <Trophy className="w-4 h-4 text-slate-900" />}
+            <span>{challengeCopied ? 'Đã chép lời thách đấu! 🎉' : '🏆 Khoe thành tích / Thách đấu'}</span>
+          </button>
+          <button
             onClick={onRetakeExam}
             className="btn-3d flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-indigo-900 hover:bg-slate-50 font-black text-xs sm:text-sm shadow-md"
           >
@@ -100,6 +133,12 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
             <span>Xem Bảng Vinh Danh</span>
           </button>
         </div>
+        {challengeCopied && (
+          <div className="mt-3 text-xs font-bold text-amber-200 flex items-center gap-1.5 animate-in fade-in">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>🔥 Đã copy lời thách đấu kèm link bài thi! Hãy dán vào nhóm Zalo hoặc Facebook để đọ điểm cùng bạn bè nhé!</span>
+          </div>
+        )}
       </div>
 
       {/* Filter Chips Bar */}

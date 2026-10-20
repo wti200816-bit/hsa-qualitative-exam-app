@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { BookOpen, Award, CheckCircle2, ShieldCheck, User, Sparkles, Menu, X, Flame } from 'lucide-react';
+import { BookOpen, Award, CheckCircle2, ShieldCheck, User, Sparkles, Menu, X, Flame, QrCode, Share2 } from 'lucide-react';
+import ShareModal from './ShareModal';
 
 export default function Navbar({ activeTab, setActiveTab, studentName, setStudentName, isExamActive }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(studentName || 'HSA')}&backgroundColor=e0e7ff,c7d2fe`;
 
   const navItems = [
@@ -63,8 +65,17 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
             })}
           </nav>
 
-          {/* Student Profile Avatar & Streak */}
-          <div className="hidden sm:flex items-center gap-3">
+          {/* Student Profile Avatar, Streak & Share */}
+          <div className="hidden sm:flex items-center gap-2.5">
+            <button
+              onClick={() => setShareModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-indigo-50/80 hover:bg-indigo-100/90 text-indigo-700 font-bold text-xs border border-indigo-200 shadow-2xs hover:scale-105 active:scale-95 transition-all"
+              title="Chia sẻ nhanh & Mã QR Lớp học"
+            >
+              <QrCode className="w-4 h-4 text-indigo-600" />
+              <span>Chia sẻ / QR</span>
+            </button>
+
             <div className="flex items-center gap-2.5 bg-white pl-2 pr-3 py-1.5 rounded-2xl border-2 border-slate-200 shadow-2xs hover:border-indigo-300 transition">
               <img
                 src={avatarUrl}
@@ -129,9 +140,23 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
                 </button>
               );
             })}
+
+            <button
+              onClick={() => {
+                setShareModalOpen(true);
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition"
+            >
+              <QrCode className="w-4 h-4 text-indigo-600" />
+              <span>🔗 Chia sẻ Web / Mã QR Lớp học</span>
+            </button>
           </div>
         )}
       </div>
+
+      {/* Share & QR Code Modal */}
+      <ShareModal isOpen={shareModalOpen} onClose={() => setShareModalOpen(false)} />
     </header>
   );
 }

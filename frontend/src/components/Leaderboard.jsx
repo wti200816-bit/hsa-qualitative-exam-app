@@ -1,11 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { Award, Trophy, Medal, Zap, Clock, UserCheck, Flame, ArrowUpRight, Crown, Sparkles } from 'lucide-react';
+import { Award, Trophy, Medal, Zap, Clock, UserCheck, Flame, ArrowUpRight, Crown, Sparkles, Share2, Check } from 'lucide-react';
 
 export default function Leaderboard({ apiBase, studentName }) {
   const [tab, setTab] = useState('mock'); // 'mock' | 'stats'
   const [timeframe, setTimeframe] = useState('all'); // 'week' | 'month' | 'all'
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [challengeCopied, setChallengeCopied] = useState(false);
+
+  const handleShareChallenge = async () => {
+    const currentUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareText = myRecord 
+      ? `🏆 Mình đang giữ Top ${myRank} Bảng Vinh Danh HSA Master với ${tab === 'mock' ? myRecord.score + '/50 điểm' : myRecord.total_correct + ' câu đúng'}! Đố bạn vượt qua được mình tại: ${currentUrl}`
+      : `🔥 Hãy vào so tài giải đề ĐGNL HSA cùng mình trên HSA Master tại: ${currentUrl}`;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareText);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
+      setChallengeCopied(true);
+      setTimeout(() => setChallengeCopied(false), 3000);
+    } catch (err) {
+      console.error(err);
+      prompt('Sao chép lời thách đấu:', shareText);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -297,7 +325,15 @@ export default function Leaderboard({ apiBase, studentName }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <button
+              onClick={handleShareChallenge}
+              className="btn-3d hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-900 font-extrabold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition"
+            >
+              {challengeCopied ? <Check className="w-3.5 h-3.5 text-emerald-950" /> : <Trophy className="w-3.5 h-3.5 text-slate-900" />}
+              <span>{challengeCopied ? 'Đã chép thách đấu!' : 'Thách đấu bạn bè'}</span>
+            </button>
+
             <div className="text-right">
               <div className="text-[11px] text-slate-400 font-bold">Thứ hạng hiện tại</div>
               <div className="text-sm font-black text-indigo-600">
@@ -306,7 +342,7 @@ export default function Leaderboard({ apiBase, studentName }) {
             </div>
 
             {myRecord && (
-              <div className="text-right pl-5 border-l border-slate-200">
+              <div className="text-right pl-4 sm:pl-5 border-l border-slate-200">
                 <div className="text-[11px] text-slate-400 font-bold">
                   {tab === 'mock' ? 'Điểm cao nhất' : 'Tổng tích lũy'}
                 </div>

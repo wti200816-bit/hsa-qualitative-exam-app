@@ -8,7 +8,9 @@ import AdminDashboard from './components/AdminDashboard';
 import AiChatDrawer from './components/AiChatDrawer';
 import { Play, Sparkles, BookOpen, Clock, Award, ShieldCheck, ChevronRight, CheckCircle2, Flame, Target, Layers } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = typeof window !== 'undefined' && window.location.port === '5173'
+  ? 'http://localhost:8000'
+  : (typeof window !== 'undefined' ? window.location.origin : '');
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('mock'); // 'mock' | 'practice' | 'result' | 'leaderboard' | 'admin'

@@ -1,6 +1,9 @@
-import sqlite3, pathlib
+import sqlite3, pathlib, os
 
-DB_PATH = pathlib.Path(r"E:\AI\DGNL_CHUAN_HOA\hsa_exam.db")
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent
+LOCAL_DB = ROOT_DIR / "DGNL_CHUAN_HOA" / "hsa_exam.db"
+FALLBACK_DB = pathlib.Path(r"E:\AI\DGNL_CHUAN_HOA\hsa_exam.db")
+DB_PATH = LOCAL_DB if LOCAL_DB.exists() else (FALLBACK_DB if FALLBACK_DB.exists() else LOCAL_DB)
 
 def get_db():
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
