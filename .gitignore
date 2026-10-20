@@ -1,4 +1,23 @@
+# Dependencies & Environments
 frontend/node_modules/
 frontend/dist/
+frontend/.vite/
+tools/
+.venv/
 __pycache__/
+*.pyc
+
+# Raw user data & heavy documents
+TAI LIEU ME LAN/
+DGNL_CHUAN_HOA/
+*.docx
+*.pdf
+*.db
+
+# Temporary json payloads
+*.json
+!frontend/package.json
+push_to_github.py
+
+# Logs
 *.log
