@@ -66,29 +66,29 @@ export default function AdminDashboard({ apiBase }) {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng số câu trong kho</div>
-          <div className="text-3xl font-extrabold text-slate-900 mt-1">{stats.total}</div>
-          <div className="text-xs text-brand-700 mt-1 font-medium">Trích xuất từ 79 tài liệu gốc</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+        <div className="bg-white rounded-3xl border-2 border-slate-200/80 p-6 shadow-soft">
+          <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Tổng số câu trong kho</div>
+          <div className="text-4xl font-black text-slate-900 mt-1">{stats.total}</div>
+          <div className="text-xs text-indigo-600 mt-1 font-bold">Kho dữ liệu ĐGNL HSA toàn diện</div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-sm bg-gradient-to-br from-white to-emerald-50/40">
-          <div className="text-xs font-semibold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="bg-white rounded-3xl border-2 border-emerald-200 p-6 shadow-soft bg-gradient-to-br from-white to-emerald-50/50">
+          <div className="text-[11px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Đã duyệt (Verified)</span>
+            <span>Đã chuẩn hóa (Verified)</span>
           </div>
-          <div className="text-3xl font-extrabold text-emerald-700 mt-1">{stats.verified}</div>
-          <div className="text-xs text-emerald-600 mt-1 font-medium">Bảo vệ phòng thi chuẩn xác 100%</div>
+          <div className="text-4xl font-black text-emerald-700 mt-1">{stats.verified}</div>
+          <div className="text-xs text-emerald-600 mt-1 font-bold">Sẵn sàng 100% cho phòng thi</div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-amber-200 p-5 shadow-sm bg-gradient-to-br from-white to-amber-50/40">
-          <div className="text-xs font-semibold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="bg-white rounded-3xl border-2 border-amber-200 p-6 shadow-soft bg-gradient-to-br from-white to-amber-50/50">
+          <div className="text-[11px] font-black text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
             <AlertCircle className="w-4 h-4 text-amber-600" />
             <span>Cần duyệt (Pending)</span>
           </div>
-          <div className="text-3xl font-extrabold text-amber-700 mt-1">{stats.pending}</div>
-          <div className="text-xs text-amber-600 mt-1 font-medium">Không đưa vào phòng thi đến khi duyệt</div>
+          <div className="text-4xl font-black text-amber-700 mt-1">{stats.pending}</div>
+          <div className="text-xs text-amber-600 mt-1 font-bold">Kiểm duyệt trước khi đưa vào phòng thi</div>
         </div>
       </div>
 
