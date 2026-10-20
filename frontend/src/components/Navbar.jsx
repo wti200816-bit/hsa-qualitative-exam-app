@@ -11,7 +11,7 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
     { id: 'mock', label: 'Thi thử (50 câu)', icon: CheckCircle2, badge: 'HSA 2026' },
     { id: 'practice', label: 'Luyện theo Dạng', icon: BookOpen, badge: 'Kho 4.028 câu' },
     { id: 'leaderboard', label: 'Bảng Vinh Danh', icon: Award, badge: 'Top 100' },
-    { id: 'analytics', label: 'Thống kê & Tác động', icon: BarChart3, badge: 'Dự thi AI' },
+    { id: 'analytics', label: 'Thống kê & Tác động', icon: BarChart3 },
     { id: 'admin', label: 'Quản trị Đề', icon: ShieldCheck },
   ];
 
