@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hsa-master-v3';
+const CACHE_NAME = 'hsa-master-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -36,6 +36,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  if (event.request.url.includes('ntfy.sh')) return;
 
   // Network-First strategy so updates to hsa_data.js and app bundles are always reflected immediately when online
   event.respondWith(

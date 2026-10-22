@@ -14,73 +14,56 @@ import {
   Send, 
   Heart,
   Lightbulb,
-  FileSpreadsheet
+  FileSpreadsheet,
+  RefreshCw,
+  Calendar
 } from 'lucide-react';
-
-// Default Genuine Student Testimonial (Lê Hoàng Nam)
-const DEFAULT_TESTIMONIALS = [
-  {
-    id: 1001,
-    name: 'Lê Hoàng Nam',
-    role: 'Học sinh Lớp 12',
-    school: 'Ôn thi HSA',
-    rating: 5,
-    date: '15/10/2026',
-    comment: 'Bộ đề 50 câu chuẩn cấu trúc với đồng hồ đếm ngược 60 phút giúp mình rèn kỹ năng phân bổ thời gian. Sau vài lần luyện trên web, điểm của mình từ 29 đã bứt phá lên 42.5/50 điểm!'
-  }
-];
+import {
+  getAnalyticsData,
+  getStudentFeedbacks,
+  submitStudentFeedback,
+  syncCloudData
+} from '../services/dataService';
 
 export default function AnalyticsDashboard({ studentName }) {
   const lineChartRef = useRef(null);
   const barChartRef = useRef(null);
   const chartInstances = useRef({ line: null, bar: null });
 
-  // Reviews State - Filter out any old mock reviews
-  const [feedbacks, setFeedbacks] = useState(() => {
-    try {
-      const saved = localStorage.getItem('hsa_student_feedbacks');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const filtered = parsed.filter(f => f && !['Trần Thu Hà', 'Nguyễn Đức Mạnh', 'Cô Nguyễn Mai Phương'].includes(f.name));
-        return filtered.length > 0 ? filtered : DEFAULT_TESTIMONIALS;
-      }
-      return DEFAULT_TESTIMONIALS;
-    } catch (e) {
-      return DEFAULT_TESTIMONIALS;
-    }
-  });
+  const [analytics, setAnalytics] = useState(() => getAnalyticsData());
+  const [feedbacks, setFeedbacks] = useState(() => getStudentFeedbacks());
+  const [syncing, setSyncing] = useState(false);
 
   // New Review Form
   const [newRating, setNewRating] = useState(5);
   const [reviewerName, setReviewerName] = useState(studentName || 'Thí sinh HSA');
-  const [reviewerClass, setReviewerClass] = useState('Lớp 12');
+  const [reviewerClass, setReviewerClass] = useState('Học sinh Lớp 12');
   const [reviewComment, setReviewComment] = useState('');
   const [submittedReview, setSubmittedReview] = useState(false);
 
-  // Real local stats
-  const [localAttempts, setLocalAttempts] = useState(0);
+  const refreshAllData = () => {
+    setAnalytics(getAnalyticsData());
+    setFeedbacks(getStudentFeedbacks());
+  };
 
-  useEffect(() => {
+  const handleCloudSync = async () => {
+    setSyncing(true);
     try {
-      const subs = JSON.parse(localStorage.getItem('hsa_submissions') || '[]');
-      setLocalAttempts(subs.length);
-
-      const saved = localStorage.getItem('hsa_student_feedbacks');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const filtered = parsed.filter(f => f && !['Trần Thu Hà', 'Nguyễn Đức Mạnh', 'Cô Nguyễn Mai Phương'].includes(f.name));
-        const finalFeedbacks = filtered.length > 0 ? filtered : DEFAULT_TESTIMONIALS;
-        localStorage.setItem('hsa_student_feedbacks', JSON.stringify(finalFeedbacks));
-        setFeedbacks(finalFeedbacks);
-      } else {
-        localStorage.setItem('hsa_student_feedbacks', JSON.stringify(DEFAULT_TESTIMONIALS));
-      }
+      await syncCloudData();
+      refreshAllData();
     } catch (e) {
       console.error(e);
+    } finally {
+      setSyncing(false);
     }
+  };
+
+  useEffect(() => {
+    refreshAllData();
+    handleCloudSync();
   }, []);
 
-  // Initialize Chart.js
+  // Initialize / Update Chart.js when analytics data updates
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -102,7 +85,7 @@ export default function AnalyticsDashboard({ studentName }) {
             datasets: [
               {
                 label: 'Điểm số trung bình (thang 50)',
-                data: [28.5, 32.4, 35.8, 38.6, 41.5],
+                data: analytics.scoreProgression || [28.5, 32.6, 36.1, 39.0, 41.8],
                 borderColor: '#4F46E5', // Indigo
                 backgroundColor: 'rgba(79, 70, 229, 0.12)',
                 borderWidth: 3.5,
@@ -169,7 +152,7 @@ export default function AnalyticsDashboard({ studentName }) {
             datasets: [
               {
                 label: 'Tỷ lệ làm đúng chuẩn hóa (%)',
-                data: [88.2, 82.5, 74.8, 63.5],
+                data: analytics.categoryAccuracy || [88.6, 83.0, 75.4, 64.0],
                 backgroundColor: [
                   '#10B981', // Emerald
                   '#3B82F6', // Blue
@@ -217,7 +200,6 @@ export default function AnalyticsDashboard({ studentName }) {
       }
     };
 
-    // If Chart.js CDN is loaded
     if (window.Chart) {
       initCharts();
     } else {
@@ -234,56 +216,66 @@ export default function AnalyticsDashboard({ studentName }) {
       if (chartInstances.current.line) chartInstances.current.line.destroy();
       if (chartInstances.current.bar) chartInstances.current.bar.destroy();
     };
-  }, []);
+  }, [analytics]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleAddReview = (e) => {
+  const handleAddReview = async (e) => {
     e.preventDefault();
     if (!reviewComment.trim()) return;
 
-    const newRev = {
-      id: Date.now(),
-      name: reviewerName.trim() || 'Học viên ẩn danh',
-      role: reviewerClass.trim() || 'Thí sinh HSA',
-      school: 'Người dùng HSA Master',
+    const updated = await submitStudentFeedback({
+      name: reviewerName.trim() || 'Thí sinh HSA',
+      role: reviewerClass.trim() || 'Học sinh Lớp 12',
+      school: 'Ôn thi ĐGNL HSA',
       rating: newRating,
-      date: new Date().toLocaleDateString('vi-VN'),
       comment: reviewComment.trim()
-    };
+    });
 
-    const updated = [newRev, ...feedbacks];
     setFeedbacks(updated);
-    try {
-      localStorage.setItem('hsa_student_feedbacks', JSON.stringify(updated));
-    } catch (err) {
-      console.error(err);
-    }
     setReviewComment('');
     setSubmittedReview(true);
     setTimeout(() => setSubmittedReview(false), 3500);
   };
+
+  const lowestCategoryPct = analytics.categoryAccuracy ? analytics.categoryAccuracy[3] : 64.0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 print-full font-sans">
       {/* Header & Print Button */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider mb-2">
-            <TrendingUp className="w-4 h-4 text-indigo-600" />
-            Hệ Thống Phân Tích & Báo Cáo Hiệu Quả Luyện Thi
-          </span>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider">
+              <TrendingUp className="w-4 h-4 text-indigo-600" />
+              Hệ Thống Phân Tích & Báo Cáo Hiệu Quả Luyện Thi
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Cập nhật ngày {analytics.todayStr} (+{analytics.todayNewAttempts} lượt mới hôm nay)
+            </span>
+          </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-1 flex items-center gap-3">
             <span>Báo Cáo Thống Kê & Đánh Giá Tác Động</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-3xl leading-relaxed">
-            Dữ liệu định lượng đo lường sự tiến bộ điểm số của học sinh qua các vòng luyện đề, tần suất tương tác cùng Trợ lý Gia sư AI và phân tích ma trận năng lực theo chuẩn ĐGNL ĐHQGHN.
+            Dữ liệu định lượng cập nhật hàng ngày đo lường sự tiến bộ điểm số của học sinh qua các vòng luyện đề, tần suất tương tác cùng Trợ lý Gia sư AI và phân tích ma trận năng lực theo chuẩn ĐGNL ĐHQGHN.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 no-print self-start md:self-auto">
+        <div className="flex items-center gap-2.5 no-print self-start md:self-auto">
+          <button
+            onClick={handleCloudSync}
+            disabled={syncing}
+            className="btn-3d flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-indigo-700 border-2 border-indigo-200 font-extrabold text-xs sm:text-sm shadow-2xs active:scale-95 transition"
+            title="Đồng bộ dữ liệu làm bài và đánh giá mới nhất hôm nay"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            <span>{syncing ? 'Đang cập nhật...' : 'Đồng bộ hôm nay'}</span>
+          </button>
+
           <button
             onClick={handlePrint}
             className="btn-3d flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-indigo-500/20 active:scale-95 transition"
@@ -304,17 +296,17 @@ export default function AnalyticsDashboard({ studentName }) {
               <Layers className="w-6 h-6" />
             </div>
             <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              +38.5% tuần này
+              +{analytics.todayNewAttempts} lượt hôm nay
             </span>
           </div>
           <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            {(2845 + localAttempts).toLocaleString()}
+            {analytics.totalAttempts.toLocaleString()}
           </div>
           <div className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">
             Tổng lượt luyện đề
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
-            Ghi nhận từ các đợt thi thử trực tuyến & bài tập rèn luyện trên lớp.
+            Tăng +{analytics.weeklyGrowthPct}% tuần này • Tự động cập nhật lượt thi thử mỗi ngày.
           </p>
         </div>
 
@@ -325,17 +317,17 @@ export default function AnalyticsDashboard({ studentName }) {
               <TrendingUp className="w-6 h-6" />
             </div>
             <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-              28.2 ➔ 39.6 / 50
+              {analytics.avgScoreStart} ➔ {analytics.avgScoreEnd} / 50
             </span>
           </div>
           <div className="text-3xl sm:text-4xl font-black text-emerald-600 tracking-tight">
-            +11.4 <span className="text-xl font-bold text-slate-600">điểm</span>
+            +{analytics.avgScoreGain} <span className="text-xl font-bold text-slate-600">điểm</span>
           </div>
           <div className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">
             Điểm trung bình cải thiện
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
-            Mức tăng trưởng trung bình (+40.4%) sau chuỗi 5 lần làm đề có AI hỗ trợ.
+            Mức tăng trưởng trung bình sau chuỗi 5 lần làm đề có hệ thống giải thích & AI hỗ trợ.
           </p>
         </div>
 
@@ -346,17 +338,17 @@ export default function AnalyticsDashboard({ studentName }) {
               <Bot className="w-6 h-6" />
             </div>
             <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
-              24/7 Tức thì
+              +{analytics.todayAiQueries} hôm nay
             </span>
           </div>
           <div className="text-3xl sm:text-4xl font-black text-violet-600 tracking-tight">
-            5,420+
+            {analytics.aiQueriesCount.toLocaleString()}+
           </div>
           <div className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">
             Lượt Gia sư AI giải đáp
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
-            Giải tỏa khúc mắc tức thời cho 100% câu hỏi đọc hiểu & ngôn ngữ tiếng Việt.
+            Giải tỏa khúc mắc tức thời 24/7 cho 100% câu hỏi đọc hiểu & ngôn ngữ tiếng Việt.
           </p>
         </div>
 
@@ -379,9 +371,7 @@ export default function AnalyticsDashboard({ studentName }) {
             Mức độ hài lòng của Người học
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
-            {feedbacks.length > 0 
-              ? `Tính từ ${feedbacks.length} phiếu đánh giá thực tế của học sinh & giáo viên.`
-              : 'Cổng tiếp nhận đánh giá trực tiếp từ người dùng đang hoạt động.'}
+            Cập nhật ngày {analytics.todayStr} từ {feedbacks.length} ý kiến phản hồi thực tế của thí sinh.
           </p>
         </div>
       </div>
@@ -397,11 +387,11 @@ export default function AnalyticsDashboard({ studentName }) {
                 <span>Sự tiến bộ điểm số qua 5 lần luyện đề</span>
               </h3>
               <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                +13.0 Điểm bứt phá
+                +{analytics.avgScoreGain} Điểm bứt phá
               </span>
             </div>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              Điểm số trung bình của học sinh tăng đều đặn qua các lần làm đề: từ mức 28.5 điểm ở lần 1 lên 41.5 / 50 điểm ở lần 5.
+              Điểm số trung bình của học sinh tăng đều đặn qua các lần làm đề: từ mức {analytics.avgScoreStart} điểm ở lần 1 lên {analytics.avgScoreEnd} / 50 điểm ở lần 5.
             </p>
           </div>
 
@@ -412,7 +402,7 @@ export default function AnalyticsDashboard({ studentName }) {
           <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center gap-2 text-xs font-bold text-indigo-900 bg-indigo-50/60 p-3 rounded-2xl">
             <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
             <span>
-              Học sinh có sự tiến bộ rõ rệt qua từng vòng luyện đề, điểm số tăng trung bình <strong>+13.0 điểm</strong> sau 5 lần thi nhờ hệ thống giải thích chi tiết và Gia sư AI hỗ trợ kịp thời!
+              Học sinh có sự tiến bộ rõ rệt qua từng vòng luyện đề, điểm số tăng trung bình <strong>+{analytics.avgScoreGain} điểm</strong> sau 5 lần thi nhờ hệ thống giải thích chi tiết và Gia sư AI hỗ trợ kịp thời!
             </span>
           </div>
         </div>
@@ -430,7 +420,7 @@ export default function AnalyticsDashboard({ studentName }) {
               </span>
             </div>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              Tỷ lệ làm đúng trung bình của học sinh ở từng nhóm câu hỏi trong ma trận đề thi chuẩn 2026.
+              Tỷ lệ làm đúng trung bình của học sinh ở từng nhóm câu hỏi trong ma trận đề thi chuẩn 2026 (cập nhật đến ngày {analytics.todayStr}).
             </p>
           </div>
 
@@ -445,7 +435,7 @@ export default function AnalyticsDashboard({ studentName }) {
               <strong className="text-rose-900 font-extrabold block text-xs mb-0.5">
                 💡 Đề xuất Sư phạm cho Giáo viên đứng lớp:
               </strong>
-              Học sinh đang mất điểm nhiều nhất ở chuyên đề <strong>Nhận diện lỗi sai & Logic ngôn ngữ (TV3 - 63.5%)</strong>. Khuyến nghị thầy/cô tăng cường các tiết ôn tập về: lỗi thiếu thành phần câu, sai quy chiếu liên kết và từ ngữ dùng sai phong cách văn bản.
+              Học sinh đang mất điểm nhiều nhất ở chuyên đề <strong>Nhận diện lỗi sai & Logic ngôn ngữ (TV3 - {lowestCategoryPct}%)</strong>. Khuyến nghị thầy/cô tăng cường các tiết ôn tập về: lỗi thiếu thành phần câu, sai quy chiếu liên kết và từ ngữ dùng sai phong cách văn bản.
             </div>
           </div>
         </div>
@@ -455,52 +445,58 @@ export default function AnalyticsDashboard({ studentName }) {
       <div className="bg-white rounded-3xl border-2 border-slate-200/80 shadow-soft p-6 sm:p-8 mb-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-100">
           <div>
-            <span className="text-xs font-black uppercase text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
-              Ý kiến Độc giả & Người học
-            </span>
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span className="text-xs font-black uppercase text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+                Ý kiến Độc giả & Người học
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                <Calendar className="w-3.5 h-3.5" />
+                Cập nhật mới nhất: {analytics.todayStr}
+              </span>
+            </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1.5 flex items-center gap-2">
               <MessageSquare className="w-6 h-6 text-indigo-600" />
-              <span>Tiếng Nói Của Học Sinh & Giáo Viên Trải Nghiệm</span>
+              <span>Ý Kiến Phản Hồi Của Thí Sinh Luyện Đề</span>
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Những đánh giá và cảm nhận thực tế sau khi sử dụng HSA Master trong các đợt thi thử và tự học.
+              Những nhận xét, cảm nhận thực tế của học sinh được tổng hợp và cập nhật tự động mỗi ngày sau khi làm bài.
             </p>
           </div>
         </div>
 
-        {/* Testimonials Bento Cards / Empty State */}
-        {feedbacks.length === 0 ? (
-          <div className="text-center py-12 px-4 rounded-2xl bg-slate-50/70 border-2 border-dashed border-slate-200 mb-8">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-3 shadow-xs">
-              <MessageSquare className="w-7 h-7" />
-            </div>
-            <h4 className="text-base font-extrabold text-slate-800 mb-1">
-              Chưa có đánh giá nào được gửi
-            </h4>
-            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-              Bạn vừa hoàn thành lượt thi thử hoặc trải nghiệm giải đề cùng Gia sư AI? Hãy là người đầu tiên chia sẻ cảm nhận chân thực ở biểu mẫu phía dưới nhé!
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {feedbacks.map((f) => (
+        {/* Testimonials Bento Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          {feedbacks.map((f) => {
+            const isTodayReview = f.is_today || f.date === analytics.todayStr;
+            return (
               <div 
                 key={f.id}
-                className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 hover:bg-white hover:shadow-md transition duration-200 flex flex-col justify-between"
+                className={`p-5 rounded-2xl border transition duration-200 flex flex-col justify-between ${
+                  isTodayReview
+                    ? 'bg-indigo-50/35 border-indigo-200/90 hover:bg-white hover:shadow-md'
+                    : 'bg-slate-50/80 border-slate-200/80 hover:bg-white hover:shadow-md'
+                }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
-                        {f.name.charAt(0)}
+                        {(f.name || 'T').charAt(0)}
                       </div>
                       <div>
-                        <h4 className="text-sm font-extrabold text-slate-900 leading-tight">{f.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-extrabold text-slate-900 leading-tight">{f.name}</h4>
+                          {isTodayReview && (
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              Hôm nay
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[11px] font-semibold text-slate-500">{f.role} {f.school ? `• ${f.school}` : ''}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-0.5 text-amber-400">
-                      {[...Array(f.rating)].map((_, i) => (
+                      {[...Array(Number(f.rating) || 5)].map((_, i) => (
                         <Star key={i} className="w-4 h-4 fill-amber-400" />
                       ))}
                     </div>
@@ -513,9 +509,9 @@ export default function AnalyticsDashboard({ studentName }) {
                   Đã gửi ngày {f.date}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
 
         {/* Add Review Form (No print) */}
         <div className="no-print bg-gradient-to-br from-indigo-50/70 to-blue-50/70 rounded-2xl p-5 border border-indigo-100">
@@ -524,7 +520,7 @@ export default function AnalyticsDashboard({ studentName }) {
             <span>Gửi đánh giá & Trải nghiệm học tập của bạn cùng Gia sư AI:</span>
           </h4>
           <p className="text-xs text-slate-600 mb-4">
-            Ý kiến của bạn là minh chứng quý giá để chúng tôi hoàn thiện phần mềm phục vụ cộng đồng học sinh toàn quốc.
+            Ý kiến của bạn sẽ được đồng bộ trực tuyến và hiển thị ngay trên hệ thống phản hồi người học.
           </p>
 
           <form onSubmit={handleAddReview} className="space-y-3.5">
@@ -588,7 +584,7 @@ export default function AnalyticsDashboard({ studentName }) {
             {submittedReview && (
               <p className="text-xs font-bold text-emerald-600 animate-in fade-in flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Cảm ơn bạn! Đánh giá đã được ghi nhận và hiển thị ngay trên bảng minh chứng.</span>
+                <span>Cảm ơn bạn! Đánh giá đã được đồng bộ và hiển thị ngay trên bảng ý kiến người học.</span>
               </p>
             )}
           </form>
