@@ -8,7 +8,7 @@ import AdminDashboard from './components/AdminDashboard';
 import AiChatDrawer from './components/AiChatDrawer';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import InstallAppModal from './components/InstallAppModal';
-import { Play, Sparkles, BookOpen, Clock, Award, ShieldCheck, ChevronRight, CheckCircle2, Flame, Target, Layers, Smartphone, Download } from 'lucide-react';
+import { Play, Sparkles, BookOpen, Clock, Award, ShieldCheck, ChevronRight, CheckCircle2, Flame, Target, Layers, Smartphone, Download, Video, X } from 'lucide-react';
 import { getTemplates, getTemplateExam, generateRandomExam, submitExam } from './services/dataService';
 
 export default function App() {
@@ -17,6 +17,7 @@ export default function App() {
   const [templates, setTemplates] = useState([]);
   const [loadingExam, setLoadingExam] = useState(false);
   const [installModalOpen, setInstallModalOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
   
   // Active Exam state
   const [activeExam, setActiveExam] = useState(null);
@@ -124,7 +125,7 @@ export default function App() {
                     </p>
                   </div>
 
-                  <div className="mt-8 relative z-10 flex flex-wrap items-center gap-4">
+                  <div className="mt-8 relative z-10 flex flex-wrap items-center gap-3.5">
                     <button
                       onClick={handleStartRandomExam}
                       disabled={loadingExam}
@@ -132,6 +133,13 @@ export default function App() {
                     >
                       <Play className="w-4 h-4 fill-slate-950" />
                       <span>{loadingExam ? 'Đang tạo đề thi...' : 'Vào Thi Thử Đề Ngẫu Nhiên 🎯'}</span>
+                    </button>
+                    <button
+                      onClick={() => setVideoModalOpen(true)}
+                      className="btn-3d flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-extrabold text-xs sm:text-sm border-2 border-white/30 border-b-4 backdrop-blur-sm transition"
+                    >
+                      <Video className="w-4 h-4 text-amber-300" />
+                      <span>🎬 Xem Video Hướng Dẫn</span>
                     </button>
                     <div className="text-xs text-indigo-200 font-bold flex items-center gap-2">
                       <Clock className="w-4 h-4 text-amber-300" /> 60 phút • 50 câu • Tự động chấm điểm
@@ -301,6 +309,44 @@ export default function App() {
         isOpen={installModalOpen}
         onClose={() => setInstallModalOpen(false)}
       />
+
+      {/* Video Tutorial Modal */}
+      {videoModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setVideoModalOpen(false)}
+        >
+          <div
+            className="bg-slate-900 rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl border-2 border-indigo-500/40"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-violet-700 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Video className="w-5 h-5 text-amber-300" />
+                <h3 className="font-extrabold text-sm sm:text-base">
+                  🎬 Video Hướng Dẫn Sử Dụng HSA Master AI (Full HD)
+                </h3>
+              </div>
+              <button
+                onClick={() => setVideoModalOpen(false)}
+                className="p-1.5 rounded-full bg-white/15 hover:bg-white/25 text-white transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-3 sm:p-5 bg-slate-950">
+              <video
+                src="./Huong_Dan_Su_Dung_HSA_Master_AI.mp4"
+                controls
+                autoPlay
+                className="w-full rounded-2xl shadow-lg aspect-video bg-black"
+              >
+                Trình duyệt của bạn không hỗ trợ phát video trực tiếp.
+              </video>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
