@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BookOpen, Check, X, Eye, EyeOff, Bot, ChevronLeft, ChevronRight, Sparkles, RefreshCw, PenTool, SearchCheck, Layers, FileText } from 'lucide-react';
 import { getPracticeCategories, getPracticeQuestions } from '../services/dataService';
 
@@ -10,6 +10,7 @@ export default function PracticeRoom({ onOpenAiChat }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
   const [showExplanation, setShowExplanation] = useState({});
+  const [clusterMode, setClusterMode] = useState('featured');
 
   // Reading tools
   const [fontSize, setFontSize] = useState('text-sm');
@@ -28,10 +29,11 @@ export default function PracticeRoom({ onOpenAiChat }) {
   }, []);
 
   // Load questions when category changes
-  const loadQuestions = () => {
+  const loadQuestions = (modeOverride) => {
     if (!selectedCat) return;
+    const modeToUse = modeOverride || clusterMode;
     setLoading(true);
-    getPracticeQuestions(selectedCat, 20)
+    getPracticeQuestions(selectedCat, 20, modeToUse)
       .then((data) => {
         setQuestions(data || []);
         setCurrentIdx(0);
@@ -43,10 +45,34 @@ export default function PracticeRoom({ onOpenAiChat }) {
   };
 
   useEffect(() => {
-    loadQuestions();
+    loadQuestions('featured');
+    setClusterMode('featured');
   }, [selectedCat]);
 
+  // Group RC questions into clusters for the Cluster Selector Bar
+  const clusterList = useMemo(() => {
+    if (selectedCat !== 'RC') return [];
+    const map = new Map();
+    questions.forEach((q, idx) => {
+      const pid = q.passage_id || `P-${idx}`;
+      if (!map.has(pid)) {
+        map.set(pid, {
+          passage_id: pid,
+          title: q.passage_title || `Chùm văn bản ${map.size + 1}`,
+          startIndex: idx,
+          questionIndices: []
+        });
+      }
+      map.get(pid).questionIndices.push(idx);
+    });
+    return Array.from(map.values());
+  }, [questions, selectedCat]);
+
   const curQ = questions[currentIdx] || {};
+  const activeCluster = useMemo(() => {
+    if (selectedCat !== 'RC') return null;
+    return clusterList.find(c => c.passage_id === curQ.passage_id) || clusterList[0] || null;
+  }, [clusterList, curQ, selectedCat]);
 
   const handleSelectOption = (opt) => {
     setUserAnswers((prev) => ({
@@ -142,13 +168,78 @@ export default function PracticeRoom({ onOpenAiChat }) {
                   {c.title.split('(')[0]}
                 </h4>
                 <div className="text-[11px] font-extrabold text-slate-400 mt-1">
-                  {c.count} câu hỏi
+                  {c.count || c.question_count} câu hỏi
                 </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Cluster Selector Bar when in RC (Đọc hiểu văn bản chùm) */}
+      {selectedCat === 'RC' && clusterList.length > 0 && !loading && (
+        <div className="bg-white rounded-3xl border-2 border-violet-200/80 p-4 sm:p-5 mb-6 shadow-soft">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-black text-xs">
+                <Layers className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                  Danh Sách Chùm Văn Bản Đọc Hiểu ({clusterList.length} Chùm • {questions.length} Câu hỏi)
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Mỗi ngữ liệu gồm 5 câu hỏi liên kết theo đúng ma trận HSA (Nhận biết ➔ Thông hiểu ➔ Vận dụng)
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                const nextMode = clusterMode === 'featured' ? 'all_bank' : 'featured';
+                setClusterMode(nextMode);
+                loadQuestions(nextMode);
+              }}
+              className="btn-3d flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-800 text-xs font-extrabold border border-violet-200 transition self-start sm:self-auto whitespace-nowrap"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>{clusterMode === 'featured' ? 'Nạp thêm chùm đề từ ngân hàng' : 'Xem 20 chùm chuyên đề trọng tâm'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5">
+            {clusterList.map((cl, cIdx) => {
+              const isCurrentCluster = activeCluster && activeCluster.passage_id === cl.passage_id;
+              const answeredInCluster = cl.questionIndices.filter(qIdx => !!userAnswers[questions[qIdx]?.id]).length;
+              return (
+                <button
+                  key={cl.passage_id}
+                  onClick={() => setCurrentIdx(cl.startIndex)}
+                  className={`px-3.5 py-2 rounded-2xl text-xs font-bold border transition shrink-0 flex items-center gap-2 ${
+                    isCurrentCluster
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-violet-600 shadow-sm font-extrabold'
+                      : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${
+                    isCurrentCluster ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
+                  }`}>
+                    Chùm {cIdx + 1}
+                  </span>
+                  <span className="max-w-[190px] truncate">{cl.title}</span>
+                  {answeredInCluster > 0 && (
+                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                      isCurrentCluster ? 'bg-amber-300 text-slate-950' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {answeredInCluster}/{cl.questionIndices.length}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="bg-white rounded-3xl border-2 border-slate-200 p-16 text-center shadow-soft">
@@ -166,12 +257,12 @@ export default function PracticeRoom({ onOpenAiChat }) {
             /* Split Screen for Reading Cluster */
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5 bg-white rounded-3xl border-2 border-slate-200/80 shadow-soft p-5 sm:p-7 min-h-[580px]">
               {/* Left: Book Reading Pane */}
-              <div className={`md:col-span-6 rounded-2xl border-2 p-5 flex flex-col max-h-[620px] shadow-inner ${themeClasses[passageTheme]}`}>
-                <div className="flex items-center justify-between pb-3 border-b border-current/15 mb-3">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-800">
+              <div className={`md:col-span-6 rounded-2xl border-2 p-5 flex flex-col max-h-[640px] shadow-inner ${themeClasses[passageTheme]}`}>
+                <div className="flex items-center justify-between pb-3 border-b border-current/15 mb-3 gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-800 line-clamp-1">
                     {curQ.passage_title || 'Ngữ liệu Văn bản'}
                   </span>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={() => setFontSize(fontSize === 'text-lg' ? 'text-base' : fontSize === 'text-base' ? 'text-sm' : 'text-sm')}
                       className="w-6 h-6 rounded bg-white/70 border border-slate-300 flex items-center justify-center text-xs font-bold"
@@ -196,10 +287,17 @@ export default function PracticeRoom({ onOpenAiChat }) {
               {/* Right: Question, Options & AI Button */}
               <div className="md:col-span-6 flex flex-col justify-between pl-0 md:pl-2">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="px-3 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-black text-xs border border-indigo-200">
-                      Câu {currentIdx + 1}/{questions.length}
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-black text-xs border border-indigo-200">
+                        {curQ.cluster_num
+                          ? `Chùm ${curQ.cluster_num} • Câu ${curQ.cluster_q_index}/${curQ.cluster_total_qs || 5}`
+                          : `Câu ${currentIdx + 1}/${questions.length}`}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-400">
+                        (Tổng: {currentIdx + 1}/{questions.length})
+                      </span>
+                    </div>
 
                     {/* Pop AI Button */}
                     <button
@@ -210,6 +308,35 @@ export default function PracticeRoom({ onOpenAiChat }) {
                       <span>✨ Hỏi Gia sư AI câu này</span>
                     </button>
                   </div>
+
+                  {/* 5-Question Stepper within Current Cluster */}
+                  {activeCluster && activeCluster.questionIndices.length > 1 && (
+                    <div className="flex items-center gap-1.5 mb-4 bg-slate-50 p-1.5 rounded-2xl border border-slate-200/80">
+                      {activeCluster.questionIndices.map((qGlobalIdx, subIdx) => {
+                        const qObj = questions[qGlobalIdx];
+                        const isCur = qGlobalIdx === currentIdx;
+                        const chosen = userAnswers[qObj?.id];
+                        const isRight = chosen && chosen === qObj?.correct_answer;
+                        return (
+                          <button
+                            key={qGlobalIdx}
+                            onClick={() => setCurrentIdx(qGlobalIdx)}
+                            className={`flex-1 py-1.5 rounded-xl text-xs font-extrabold transition ${
+                              isCur
+                                ? 'bg-indigo-600 text-white shadow-xs'
+                                : chosen
+                                ? isRight
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                  : 'bg-rose-100 text-rose-800 border border-rose-300'
+                                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70'
+                            }`}
+                          >
+                            Câu {subIdx + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   <div 
                     className="text-sm font-bold text-slate-900 mb-4 leading-relaxed whitespace-pre-line"

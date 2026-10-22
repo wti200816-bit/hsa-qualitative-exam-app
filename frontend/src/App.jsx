@@ -161,7 +161,7 @@ export default function App() {
                       <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                         Ngân hàng Câu hỏi
                       </span>
-                      <div className="text-3xl font-black text-slate-900 mt-1">4.028 Câu</div>
+                      <div className="text-3xl font-black text-slate-900 mt-1">4.128 Câu</div>
                       <p className="text-xs text-slate-500 font-medium">100% có đáp án & lời giải</p>
                     </div>
                     <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-200 shrink-0">

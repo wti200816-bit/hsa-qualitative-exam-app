@@ -944,12 +944,12 @@ export async function getPracticeCategories() {
     'TV2': { title: 'Điền từ vào chỗ trống', desc: 'Ngữ pháp, liên kết câu, văn cảnh' },
     'TV3': { title: 'Xác định từ/câu dùng sai', desc: 'Lỗi logic, chính tả, phong cách văn bản' },
     'R1': { title: 'Đọc hiểu ngữ liệu ngắn', desc: 'Thơ, danh ngôn, câu đối thoại, thành ngữ' },
-    'R2': { title: 'Đọc hiểu văn bản chùm', desc: 'Văn bản văn học, nghị luận, khoa học (5 câu/cụm)' }
+    'RC': { title: 'Đọc hiểu văn bản chùm', desc: 'Văn bản văn học, nghị luận, khoa học (5 câu/cụm)' }
   };
 
   const counts = {};
   allQs.forEach(q => {
-    const cat = q.category || 'OTHER';
+    const cat = q.category === 'R2' ? 'RC' : (q.category || 'OTHER');
     counts[cat] = (counts[cat] || 0) + 1;
   });
 
@@ -962,11 +962,77 @@ export async function getPracticeCategories() {
   }));
 }
 
-export async function getPracticeQuestions(category, limit = 20) {
+export async function getPracticeQuestions(category, limit = 20, clusterMode = 'featured') {
   const data = await loadHsaData();
+  const targetCat = category === 'R2' ? 'RC' : category;
   let list = Object.values(data.questions).filter(q => q.status === 'verified');
-  if (category) {
-    list = list.filter(q => q.category === category);
+
+  if (targetCat === 'RC') {
+    const rcList = list.filter(q => q.category === 'RC' || q.category === 'R2');
+    const passageGroups = {};
+    rcList.forEach(q => {
+      if (!q.passage_id) return;
+      if (!passageGroups[q.passage_id]) passageGroups[q.passage_id] = [];
+      passageGroups[q.passage_id].push(q);
+    });
+
+    const featuredOrder = [
+      'PASSAGE-HSA-408405',
+      'PASSAGE-HSA-408388',
+      'PASSAGE-HSA-408330',
+      'PASSAGE-HSA-408296',
+      'PASSAGE-HSA-401471',
+      'PASSAGE-HSA-400862',
+      'PASSAGE-HSA-273510',
+      'PASSAGE-HSA-310861',
+      'PASSAGE-HSA-394514',
+      'PASSAGE-HSA-389703',
+      'PASSAGE-HSA-390906',
+      'PASSAGE-HSA-394523',
+      'PASSAGE-HSA-401478',
+      'PASSAGE-HSA-307101',
+      'PASSAGE-HSA-387301',
+      'PASSAGE-HSA-389710',
+      'PASSAGE-HSA-396145',
+      'PASSAGE-HSA-390496',
+      'PASSAGE-HSA-306492',
+      'PASSAGE-HSA-400855'
+    ].filter(pid => passageGroups[pid] && passageGroups[pid].length >= 5);
+
+    let selectedPassageIds = [];
+    if (clusterMode === 'featured' && featuredOrder.length > 0) {
+      selectedPassageIds = featuredOrder;
+    } else {
+      const otherIds = Object.keys(passageGroups).filter(
+        pid => !featuredOrder.includes(pid) && passageGroups[pid].length >= 5
+      );
+      selectedPassageIds = [...featuredOrder, ...shuffle(otherIds).slice(0, 10)];
+    }
+
+    const groupedResult = [];
+    selectedPassageIds.forEach((pid, clusterIdx) => {
+      const passage = data.passages[pid];
+      const childQs = passageGroups[pid]
+        .sort((a, b) => (a.source_q_num || 0) - (b.source_q_num || 0))
+        .slice(0, 5);
+      childQs.forEach((q, qIdx) => {
+        groupedResult.push({
+          ...q,
+          passage_id: pid,
+          passage_title: passage ? passage.title : `Chùm văn bản ${clusterIdx + 1}`,
+          passage_content: passage ? passage.content : null,
+          cluster_num: clusterIdx + 1,
+          cluster_q_index: qIdx + 1,
+          cluster_total_qs: childQs.length
+        });
+      });
+    });
+
+    return groupedResult;
+  }
+
+  if (targetCat) {
+    list = list.filter(q => q.category === targetCat);
   }
 
   const selected = shuffle(list).slice(0, limit);

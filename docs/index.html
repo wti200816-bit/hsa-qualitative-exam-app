@@ -33,7 +33,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('./sw.js?v=3').then(function(reg) {
+          navigator.serviceWorker.register('./sw.js?v=6').then(function(reg) {
             reg.update();
           }).catch(function(err) {
             console.log('SW registration note:', err);
@@ -140,8 +140,8 @@
     <!-- Chart.js UMD for Analytics Dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <!-- Preloaded HSA Exam Bank Data -->
-    <script src="./data/hsa_data.js?v=20261022_v3"></script>
-    <script type="module" crossorigin src="./assets/index-CNBv1ypJ.js"></script>
+    <script src="./data/hsa_data.js?v=20261022_v6"></script>
+    <script type="module" crossorigin src="./assets/index-HADxvyKN.js"></script>
   </head>
   <body class="text-slate-800 antialiased selection:bg-brand-600 selection:text-white min-h-screen">
     <div id="root"></div>

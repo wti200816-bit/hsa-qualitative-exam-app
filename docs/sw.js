@@ -1,11 +1,11 @@
-const CACHE_NAME = 'hsa-master-v5';
+const CACHE_NAME = 'hsa-master-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './data/hsa_data.js?v=20261022_v3'
+  './data/hsa_data.js?v=20261022_v6'
 ];
 
 self.addEventListener('install', (event) => {
