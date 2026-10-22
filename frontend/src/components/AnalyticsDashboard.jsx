@@ -32,6 +32,7 @@ export default function AnalyticsDashboard({ studentName }) {
 
   const [analytics, setAnalytics] = useState(() => getAnalyticsData());
   const [feedbacks, setFeedbacks] = useState(() => getStudentFeedbacks());
+  const [reviewDateFilter, setReviewDateFilter] = useState('all'); // 'all' | 'yesterday' | 'today'
   const [syncing, setSyncing] = useState(false);
 
   // New Review Form
@@ -443,7 +444,7 @@ export default function AnalyticsDashboard({ studentName }) {
 
       {/* STUDENT FEEDBACK & TESTIMONIALS WIDGET */}
       <div className="bg-white rounded-3xl border-2 border-slate-200/80 shadow-soft p-6 sm:p-8 mb-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-xs font-black uppercase text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
@@ -456,61 +457,112 @@ export default function AnalyticsDashboard({ studentName }) {
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1.5 flex items-center gap-2">
               <MessageSquare className="w-6 h-6 text-indigo-600" />
-              <span>Ý Kiến Phản Hồi Của Thí Sinh Luyện Đề</span>
+              <span>Ý Kiến Phản Hồi Của Thí Sinh Luyện Đề ({feedbacks.length})</span>
             </h2>
             <p className="text-xs text-slate-500 mt-1">
               Những nhận xét, cảm nhận thực tế của học sinh được tổng hợp và cập nhật tự động mỗi ngày sau khi làm bài.
             </p>
           </div>
+
+          {/* Date Filter Tabs */}
+          <div className="no-print flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-bold self-start md:self-auto">
+            <button
+              onClick={() => setReviewDateFilter('all')}
+              className={`px-3 py-1.5 rounded-xl transition ${
+                reviewDateFilter === 'all'
+                  ? 'bg-white text-indigo-700 shadow-2xs font-extrabold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Tất cả ({feedbacks.length})
+            </button>
+            <button
+              onClick={() => setReviewDateFilter('yesterday')}
+              className={`px-3 py-1.5 rounded-xl transition ${
+                reviewDateFilter === 'yesterday'
+                  ? 'bg-indigo-600 text-white shadow-2xs font-extrabold'
+                  : 'text-indigo-700 hover:bg-white/60'
+              }`}
+            >
+              Hôm qua • 21/10/2026 ({feedbacks.filter(f => f.date === '21/10/2026').length})
+            </button>
+            <button
+              onClick={() => setReviewDateFilter('today')}
+              className={`px-3 py-1.5 rounded-xl transition ${
+                reviewDateFilter === 'today'
+                  ? 'bg-emerald-600 text-white shadow-2xs font-extrabold'
+                  : 'text-emerald-700 hover:bg-white/60'
+              }`}
+            >
+              Hôm nay • {analytics.todayStr} ({feedbacks.filter(f => f.is_today || f.date === analytics.todayStr).length})
+            </button>
+          </div>
         </div>
 
         {/* Testimonials Bento Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {feedbacks.map((f) => {
-            const isTodayReview = f.is_today || f.date === analytics.todayStr;
-            return (
-              <div 
-                key={f.id}
-                className={`p-5 rounded-2xl border transition duration-200 flex flex-col justify-between ${
-                  isTodayReview
-                    ? 'bg-indigo-50/35 border-indigo-200/90 hover:bg-white hover:shadow-md'
-                    : 'bg-slate-50/80 border-slate-200/80 hover:bg-white hover:shadow-md'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
-                        {(f.name || 'T').charAt(0)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-extrabold text-slate-900 leading-tight">{f.name}</h4>
-                          {isTodayReview && (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              Hôm nay
-                            </span>
-                          )}
+          {feedbacks
+            .filter((f) => {
+              if (reviewDateFilter === 'yesterday') return f.date === '21/10/2026';
+              if (reviewDateFilter === 'today') return f.is_today || f.date === analytics.todayStr;
+              return true;
+            })
+            .map((f) => {
+              const isTodayReview = f.is_today || f.date === analytics.todayStr;
+              const isYesterdayReview = f.date === '21/10/2026';
+              return (
+                <div 
+                  key={f.id}
+                  className={`p-5 rounded-2xl border transition duration-200 flex flex-col justify-between ${
+                    isTodayReview
+                      ? 'bg-indigo-50/35 border-indigo-200/90 hover:bg-white hover:shadow-md'
+                      : isYesterdayReview
+                      ? 'bg-blue-50/25 border-blue-200/80 hover:bg-white hover:shadow-md'
+                      : 'bg-slate-50/80 border-slate-200/80 hover:bg-white hover:shadow-md'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shadow-xs">
+                          {(f.name || 'T').charAt(0)}
                         </div>
-                        <p className="text-[11px] font-semibold text-slate-500">{f.role} {f.school ? `• ${f.school}` : ''}</p>
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="text-sm font-extrabold text-slate-900 leading-tight">{f.name}</h4>
+                            {isTodayReview ? (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                Hôm nay ({f.date})
+                              </span>
+                            ) : isYesterdayReview ? (
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                Hôm qua ({f.date})
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                                Ngày {f.date}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] font-semibold text-slate-500">{f.role} {f.school ? `• ${f.school}` : ''}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-0.5 text-amber-400 shrink-0">
+                        {[...Array(Number(f.rating) || 5)].map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-amber-400" />
+                        ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-0.5 text-amber-400">
-                      {[...Array(Number(f.rating) || 5)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-amber-400" />
-                      ))}
-                    </div>
+                    <p className="text-xs text-slate-700 leading-relaxed italic font-serif">
+                      "{f.comment}"
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-700 leading-relaxed italic font-serif">
-                    "{f.comment}"
-                  </p>
+                  <div className="text-[10px] font-bold text-slate-400 mt-3 text-right">
+                    Đã gửi ngày {f.date}
+                  </div>
                 </div>
-                <div className="text-[10px] font-bold text-slate-400 mt-3 text-right">
-                  Đã gửi ngày {f.date}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         {/* Add Review Form (No print) */}

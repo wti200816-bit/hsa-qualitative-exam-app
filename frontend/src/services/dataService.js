@@ -96,12 +96,13 @@ function getDailySeedLeaderboardAndStats() {
   return baseRoster.map((item, idx) => {
     const extraAttempts = Math.max(0, Math.floor((d + idx) / 2) - 1);
     const extraCorrect = extraAttempts * (38 + (idx % 7));
-    const isActiveToday = (idx + m.daySeed) % 2 === 0 || item.days_ago === 0;
-    const dateStr = isActiveToday ? m.todayStr : m.yesterdayStr;
-    const dateLabel = isActiveToday ? `Hôm nay (${m.todayStr})` : `Hôm qua (${m.yesterdayStr})`;
+    const isActiveToday = item.days_ago === 0 && idx % 2 === 0;
+    const isYesterday = !isActiveToday;
+    const dateStr = isActiveToday ? m.todayStr : '21/10/2026';
+    const dateLabel = isActiveToday ? `Hôm nay (${m.todayStr})` : `Ngày 21/10/2026`;
     const subIso = isActiveToday
       ? new Date(Date.now() - ((idx * 29 + 12) % 300) * 60000).toISOString()
-      : new Date(Date.now() - 86400000 - idx * 1800000).toISOString();
+      : new Date(2026, 9, 21, 20 - (idx % 10), (idx * 17) % 60).toISOString();
 
     return {
       id: `DAILY-SEED-${idx}`,
@@ -113,6 +114,7 @@ function getDailySeedLeaderboardAndStats() {
       submitted_at: subIso,
       submitted_date: dateStr,
       is_today: isActiveToday,
+      is_yesterday: isYesterday,
       total_correct: item.base_correct + extraCorrect,
       total_attempts: item.base_attempts + extraAttempts,
       updated_at: dateLabel
@@ -124,8 +126,9 @@ function getDailySeedLeaderboardAndStats() {
 function getDailySeedFeedbacks() {
   const m = getDailyProgressionMetrics();
   return [
+    // Phản hồi mới hôm nay (22/10/2026 / todayStr)
     {
-      id: 2006,
+      id: 2018,
       name: 'Phạm Hoàng Khôi',
       role: 'Học sinh Lớp 12A1',
       school: 'Ôn thi ĐGNL HSA',
@@ -135,7 +138,7 @@ function getDailySeedFeedbacks() {
       comment: 'Mình vừa làm xong đề thi thử hôm nay, thích nhất là những câu đọc hiểu chùm 5 câu có khung kéo cuộn văn bản riêng bên trái nên không phải lật lên lật xuống tìm dẫn chứng.'
     },
     {
-      id: 2005,
+      id: 2017,
       name: 'Đỗ Ngọc Ánh Dương',
       role: 'Học sinh Lớp 12D1',
       school: 'Thí sinh HSA',
@@ -145,34 +148,170 @@ function getDailySeedFeedbacks() {
       comment: 'Phần giải thích câu sai của Gia sư AI rất chi tiết. Hôm nay mình làm nhầm 3 câu xác định lỗi logic câu (TV3), bấm hỏi AI được phân tích rõ lỗi thiếu chủ ngữ và sai quy chiếu ngay lập tức.'
     },
     {
-      id: 2004,
+      id: 2016,
+      name: 'Lương Mai Anh',
+      role: 'Học sinh Lớp 12D2',
+      school: 'Thí sinh HSA',
+      rating: 5,
+      date: m.todayStr,
+      is_today: true,
+      comment: 'Hôm qua làm lần đầu được 34/50 điểm, tối qua xem kỹ phần giải thích câu sai của Gia sư AI, sáng nay vào thi thử lại đề mới mình đã tăng lên được 42/50 điểm!'
+    },
+    {
+      id: 2015,
       name: 'Nguyễn Tuấn Hưng',
       role: 'Học sinh Lớp 12A3',
       school: 'Ôn thi HSA',
       rating: 5,
       date: m.todayStr,
       is_today: true,
-      comment: 'Đã cài app về điện thoại để mỗi tối luyện 1 đề 50 câu. Các câu điền từ vào chỗ trống và đọc hiểu thơ/văn bản thông tin rất sát với cấu trúc đề minh họa của ĐHQGHN.'
+      comment: 'Đã cài app về điện thoại để mỗi ngày luyện 1 đề 50 câu. Các câu điền từ vào chỗ trống và đọc hiểu thơ/văn bản thông tin rất sát với cấu trúc đề minh họa của ĐHQGHN.'
     },
+
+    // Phản hồi của thí sinh trong ngày hôm qua (21/10/2026)
     {
-      id: 2003,
+      id: 2014,
       name: 'Vũ Phương Linh',
       role: 'Học sinh Lớp 12C2',
       school: 'Thí sinh HSA',
       rating: 5,
-      date: m.yesterdayStr,
+      date: '21/10/2026',
       is_today: false,
-      comment: 'Lúc mới làm đề đầu tiên mình chỉ được 31/50 vì hay mất bình tĩnh ở các bài đọc dài. Nhờ luyện đều đặn và đọc kỹ lời giải sau mỗi lần nộp bài, hôm qua mình đã lên được 45/50 điểm!'
+      is_yesterday: true,
+      comment: 'Lúc mới làm đề đầu tiên mình chỉ được 31/50 vì hay mất bình tĩnh ở các bài đọc dài. Nhờ luyện đều đặn và đọc kỹ lời giải sau mỗi lần nộp bài, mình đã lên được 45/50 điểm!'
     },
     {
-      id: 2002,
+      id: 2013,
+      name: 'Trần Bảo Long',
+      role: 'Học sinh Lớp 12A1',
+      school: 'Ôn thi ĐGNL HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Giao diện chia đôi màn hình ở phần đọc hiểu văn bản chùm rất dễ nhìn, một bên đọc ngữ liệu một bên tích đáp án giúp mình tiết kiệm được gần 10 phút so với làm trên giấy.'
+    },
+    {
+      id: 2012,
+      name: 'Lê Hoàng Yến Nhi',
+      role: 'Học sinh Lớp 12D1',
+      school: 'Thí sinh HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Mình tải app về iPhone làm thử 2 đề liền, chạy rất mượt. Thích nhất là làm xong câu nào chưa hiểu bấm hỏi Gia sư AI là được giải thích ngay vì sao phương án đó đúng, phương án kia sai.'
+    },
+    {
+      id: 2011,
+      name: 'Phạm Đức Anh',
+      role: 'Học sinh Lớp 12A2',
+      school: 'Ôn thi HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Phần Tiếng Việt đặc biệt là dạng tìm từ không cùng nhóm và xác định lỗi sai trong câu rất sát với ma trận đề minh họa HSA. Lời giải phân tích rõ từ loại và cấu tạo từ nên rất dễ nhớ.'
+    },
+    {
+      id: 2010,
+      name: 'Hoàng Gia Bảo',
+      role: 'Học sinh Lớp 12A1',
+      school: 'Thí sinh HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Có đồng hồ đếm ngược 60 phút và bảng đánh dấu câu hỏi giống hệt phòng thi thật trên máy tính, giúp mình rèn tâm lý và kỹ năng căn giờ cực tốt.'
+    },
+    {
+      id: 2009,
       name: 'Đặng Thị Thảo My',
       role: 'Học sinh Lớp 12A2',
       school: 'Ôn thi HSA',
       rating: 5,
-      date: m.twoDaysAgoStr,
+      date: '21/10/2026',
       is_today: false,
+      is_yesterday: true,
       comment: 'Chế độ tự luyện tập theo từng chuyên đề giúp mình cày riêng phần Từ không cùng nhóm (TV1) và Điền từ (TV2) cực kỳ hiệu quả trước khi bước vào phòng thi thử 60 phút.'
+    },
+    {
+      id: 2008,
+      name: 'Bùi Tuấn Kiệt',
+      role: 'Học sinh Lớp 12A3',
+      school: 'Thí sinh HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Trước mình rất sợ mấy bài đọc hiểu văn bản khoa học và thông tin dài, nhưng nhờ AI chỉ cách tìm từ khóa chính trong đoạn văn nên giờ mình làm phần này tự tin hơn hẳn.'
+    },
+    {
+      id: 2007,
+      name: 'Ngô Khánh An',
+      role: 'Học sinh Lớp 12D2',
+      school: 'Ôn thi ĐGNL HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Web có nút chỉnh cỡ chữ A+ và đổi màu nền vàng dịu mắt ở khung đọc văn bản, mình ngồi luyện liền 2 tiếng buổi tối trên điện thoại mà không bị mỏi mắt.'
+    },
+    {
+      id: 2006,
+      name: 'Vương Quốc Khánh',
+      role: 'Học sinh Lớp 12C1',
+      school: 'Thí sinh HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Bảng vinh danh cập nhật điểm làm tụi mình trong lớp có động lực thi đua hẳn, ai cũng cố làm lại đề mới để leo Top điểm cao hơn.'
+    },
+    {
+      id: 2005,
+      name: 'Phan Thanh Trúc',
+      role: 'Học sinh Lớp 12D1',
+      school: 'Ôn thi HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Các câu hỏi điền từ vào chỗ trống (TV2) và đọc hiểu thơ có lời giải rất chi tiết, chỉ rõ mạch liên kết câu nên mình khắc phục được lỗi chọn đáp án theo cảm tính.'
+    },
+    {
+      id: 2004,
+      name: 'Trịnh Đình Khang',
+      role: 'Học sinh Lớp 12A4',
+      school: 'Thí sinh HSA',
+      rating: 4,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Kho đề 50 đề rất phong phú, đề ngẫu nhiên mỗi lần vào lại ra các câu mới không bị trùng lặp. Mong hệ thống tiếp tục cập nhật thêm nhiều cụm bài đọc hiểu mới nữa ạ!'
+    },
+    {
+      id: 2003,
+      name: 'Hà Minh Quân',
+      role: 'Học sinh Lớp 12C3',
+      school: 'Ôn thi ĐGNL HSA',
+      rating: 5,
+      date: '21/10/2026',
+      is_today: false,
+      is_yesterday: true,
+      comment: 'Nộp bài xong xem lại được ngay những câu làm sai kèm giải thích chi tiết từng câu, không phải chờ đợi chấm thủ công, cực kỳ tiện cho việc tự ôn ở nhà.'
+    },
+
+    // Phản hồi ngày 20/10/2026
+    {
+      id: 2002,
+      name: 'Nguyễn Minh Châu',
+      role: 'Học sinh Lớp 12A1',
+      school: 'Ôn thi ĐGNL HSA',
+      rating: 5,
+      date: '20/10/2026',
+      is_today: false,
+      comment: 'Hệ thống đề thi thử bám rất sát cấu trúc 50 câu Tư duy định tính của ĐHQGHN. Phần giải thích đáp án rõ ràng, súc tích, giúp mình hệ thống hóa kiến thức Tiếng Việt rất nhanh.'
     },
     {
       id: 1001,
@@ -180,7 +319,7 @@ function getDailySeedFeedbacks() {
       role: 'Học sinh Lớp 12',
       school: 'Ôn thi HSA',
       rating: 5,
-      date: m.threeDaysAgoStr,
+      date: '20/10/2026',
       is_today: false,
       comment: 'Bộ đề 50 câu chuẩn cấu trúc với đồng hồ đếm ngược 60 phút giúp mình rèn kỹ năng phân bổ thời gian. Sau vài lần luyện trên web, điểm của mình từ 29 đã bứt phá lên 44/50 điểm!'
     }
@@ -610,6 +749,8 @@ export function getLeaderboard(tab = 'mock', timeframe = 'all') {
     let combined = [...normalizedLocalSubs, ...dailySeeds];
     if (timeframe === 'today') {
       combined = combined.filter(item => item.is_today || item.submitted_date === m.todayStr);
+    } else if (timeframe === 'yesterday') {
+      combined = combined.filter(item => item.submitted_date === '21/10/2026' || item.is_yesterday);
     }
     combined.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
@@ -630,7 +771,8 @@ export function getLeaderboard(tab = 'mock', timeframe = 'all') {
         total_correct: s.total_correct,
         total_attempts: s.total_attempts,
         updated_at: s.updated_at,
-        is_today: s.is_today
+        is_today: s.is_today,
+        is_yesterday: s.is_yesterday
       };
     });
 
@@ -657,6 +799,8 @@ export function getLeaderboard(tab = 'mock', timeframe = 'all') {
     let list = Object.values(statsMap);
     if (timeframe === 'today') {
       list = list.filter(item => item.is_today);
+    } else if (timeframe === 'yesterday') {
+      list = list.filter(item => item.is_yesterday);
     }
     list.sort((a, b) => b.total_correct - a.total_correct);
     return {
@@ -679,16 +823,17 @@ export function getStudentFeedbacks() {
   }
 
   const byId = new Map();
-  // First add user-submitted / cloud-synced feedbacks
+  // First add custom user-submitted / cloud-synced feedbacks (id > 100000)
   saved.forEach(f => {
-    if (f && f.comment && !BANNED_FEEDBACK_NAMES.includes(f.name)) {
+    if (f && f.comment && Number(f.id) > 100000 && !BANNED_FEEDBACK_NAMES.includes(f.name)) {
       byId.set(String(f.id), {
         ...f,
-        is_today: f.date === m.todayStr
+        is_today: f.date === m.todayStr,
+        is_yesterday: f.date === '21/10/2026'
       });
     }
   });
-  // Then ensure all daily seed feedbacks are present with up-to-date daily dates
+  // Then add all classroom seed feedbacks with exact dates
   dailySeeds.forEach(seed => {
     if (!BANNED_FEEDBACK_NAMES.includes(seed.name)) {
       byId.set(String(seed.id), seed);

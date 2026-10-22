@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hsa-master-v4';
+const CACHE_NAME = 'hsa-master-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
