@@ -2,18 +2,27 @@ import React from 'react';
 import { HelpCircle, BookOpen, FileText } from 'lucide-react';
 
 /**
- * Helper to highlight blanks [...] or long spaces cleanly in question texts
+ * Helper to format blanks in question texts as 2 sets of 3 dots (......)
+ * Clean standard exam style without brackets and without question mark.
  */
-function formatBlanksInHtml(text) {
+function formatBlanksInHtml(text, isFillBlank = false) {
   if (!text) return '';
-  // First, clean any accidental double/nested brackets like [ [...] ] or [[...]]
-  let cleaned = text.replace(/\[\s*\[\s*\.\.\.\s*\]\s*\]/g, '[...]')
-                    .replace(/\[\s*\[\.\.\.\]\s*\]/g, '[...]');
+  if (!isFillBlank) {
+    // Non-fill-in-the-blank questions (e.g. TV3 find error, RC reading passages, poetry):
+    // Preserve text, do not convert dots or ellipsis to blanks!
+    return text;
+  }
 
-  // Replace [...], (...), unicode ellipsis (…), dots (....), underscores (___), hyphens (--), or multiple spaces (>=3 spaces)
-  let formatted = cleaned.replace(/\[\s*\.\.\.\s*\]|\(\s*\.\.\.\s*\)|[\u2026]{1,}|\.{3,}|_{2,}|-{2,}|[ \t]{3,}/g, () => {
-    return `<span class="inline-flex items-center justify-center px-3.5 py-1 mx-1.5 border-2 border-dashed border-indigo-600 bg-indigo-100 text-indigo-950 font-mono text-xs sm:text-sm font-black rounded-xl shadow-xs select-none tracking-wider">[ &nbsp;... ? ...&nbsp; ]</span>`;
+  // Replace any remaining [...], (...), or sequences of dots (4+), underscores, dashes with 6 dots (......)
+  let formatted = text.replace(/\[\s*\.\.\.\s*\]|\(\s*\.\.\.\s*\)|\[\s*\.\.\.\s*\?\s*\.\.\.\s*\]|[\u2026]{2,}|\.{4,}|_{2,}|-{2,}/g, () => {
+    return `<span class="font-bold tracking-wider text-indigo-700 font-mono">......</span>`;
   });
+
+  // Also style any existing 6 dots '......' cleanly
+  formatted = formatted.replace(/(?<!\.)(\.{6})(?!\.)/g, () => {
+    return `<span class="font-bold tracking-wider text-indigo-700 font-mono">......</span>`;
+  });
+
   return formatted;
 }
 
@@ -23,6 +32,10 @@ function formatBlanksInHtml(text) {
  */
 export default function QuestionDisplay({ content, category = '' }) {
   if (!content) return null;
+
+  const isFillBlank = category === 'TV2' || 
+                      content.toLowerCase().includes('điền vào chỗ trống') || 
+                      content.toLowerCase().includes('chỗ trống');
 
   // Split content by lines
   let lines = content.split('\n').map(l => l.trim()).filter(Boolean);
@@ -43,7 +56,7 @@ export default function QuestionDisplay({ content, category = '' }) {
   }
 
   if (promptText && contextText) {
-    const formattedContext = formatBlanksInHtml(contextText);
+    const formattedContext = formatBlanksInHtml(contextText, isFillBlank);
 
     return (
       <div className="space-y-3.5 mb-5">
@@ -78,7 +91,7 @@ export default function QuestionDisplay({ content, category = '' }) {
   }
 
   // Single line content without auto-split: Highlight as "PHẦN HỎI"
-  const formattedContent = formatBlanksInHtml(content);
+  const formattedContent = formatBlanksInHtml(content, isFillBlank);
   return (
     <div className="mb-5">
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-black uppercase tracking-wider mb-2">
