@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Timer, AlertTriangle, ChevronLeft, ChevronRight, Flag, CheckCircle, HelpCircle, Send, ZoomIn, ZoomOut, Sun, Moon, BookOpen } from 'lucide-react';
+import QuestionDisplay from './QuestionDisplay';
 
 export default function ExamRoom({ examData, onSubmitExam, onCancel }) {
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -127,9 +128,8 @@ export default function ExamRoom({ examData, onSubmitExam, onCancel }) {
                 {/* Reading Toolbar */}
                 <div className="flex items-center justify-between pb-3 border-b border-current/15 mb-3">
                   <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-indigo-600" />
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-800">
-                      Ngữ liệu đọc hiểu
+                    <span className="px-2.5 py-1 rounded-lg bg-amber-500 text-white font-black text-xs uppercase shadow-xs flex items-center gap-1.5">
+                      📖 PHẦN ĐỀ: NGỮ LIỆU ĐỌC HIỂU
                     </span>
                   </div>
 
@@ -188,9 +188,14 @@ export default function ExamRoom({ examData, onSubmitExam, onCancel }) {
               <div className="md:col-span-6 flex flex-col justify-between pl-0 md:pl-2">
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="px-3 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-black text-xs border border-indigo-200">
-                      Câu {curQ.order_num || currentIdx + 51}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-xl bg-indigo-600 text-white font-black text-xs uppercase shadow-xs flex items-center gap-1.5">
+                        ❓ PHẦN HỎI
+                      </span>
+                      <span className="px-3 py-1 rounded-xl bg-indigo-100 text-indigo-900 font-black text-xs border border-indigo-200">
+                        Câu {curQ.order_num || currentIdx + 51}
+                      </span>
+                    </div>
                     <button
                       onClick={() => toggleFlag(curQ.id)}
                       className={`btn-3d flex items-center gap-1 text-xs px-3 py-1.5 rounded-xl font-bold transition ${
@@ -204,10 +209,7 @@ export default function ExamRoom({ examData, onSubmitExam, onCancel }) {
                     </button>
                   </div>
 
-                  <div 
-                    className="text-sm font-bold text-slate-900 mb-5 leading-relaxed whitespace-pre-line font-sans"
-                    dangerouslySetInnerHTML={{ __html: curQ.content }}
-                  />
+                  <QuestionDisplay content={curQ.content} category={curQ.category} />
 
                   {/* 3D Tactile Options A, B, C, D */}
                   <div className="space-y-3">
@@ -290,10 +292,7 @@ export default function ExamRoom({ examData, onSubmitExam, onCancel }) {
                   </button>
                 </div>
 
-                <div 
-                  className="text-base sm:text-lg font-bold text-slate-900 mb-7 leading-relaxed whitespace-pre-line"
-                  dangerouslySetInnerHTML={{ __html: curQ.content }}
-                />
+                <QuestionDisplay content={curQ.content} category={curQ.category} />
 
                 {/* 3D Tactile Options */}
                 <div className="space-y-3.5">

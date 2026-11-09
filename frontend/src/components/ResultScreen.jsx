@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Award, CheckCircle2, XCircle, Timer, RotateCcw, Bot, BookOpen, Sparkles, Trophy, ArrowRight, Share2, Copy, Check, BarChart3, MessageSquare, Star, Send } from 'lucide-react';
+import { Award, CheckCircle2, XCircle, Timer, RotateCcw, Bot, BookOpen, Sparkles, Trophy, ArrowRight, Share2, Copy, Check, BarChart3, MessageSquare, Star, Send, User } from 'lucide-react';
 import { submitStudentFeedback } from '../services/dataService';
+import QuestionDisplay from './QuestionDisplay';
 
-export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboard, onViewAnalytics, onOpenAiChat }) {
+export default function ResultScreen({ resultData, studentName, onUpdateStudentName, onRetakeExam, onViewLeaderboard, onViewAnalytics, onOpenAiChat }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'correct' | 'incorrect'
   const [challengeCopied, setChallengeCopied] = useState(false);
+  const [currentStudentName, setCurrentStudentName] = useState(studentName || resultData.student_name || 'Thí sinh HSA');
+  const [nameSaved, setNameSaved] = useState(false);
 
   // Quick Feedback Form State on Result Screen
   const [rating, setRating] = useState(5);
-  const [reviewerName, setReviewerName] = useState(resultData.student_name || 'Thí sinh HSA');
+  const [reviewerName, setReviewerName] = useState(studentName || resultData.student_name || 'Thí sinh HSA');
   const [reviewerRole, setReviewerRole] = useState('Học sinh Lớp 12');
   const [comment, setComment] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
@@ -61,6 +64,16 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
       console.error(err);
       prompt('Sao chép lời thách đấu bên dưới:', shareText);
     }
+  };
+
+  const handleSaveStudentName = () => {
+    const val = currentStudentName.trim() || 'Thí sinh HSA';
+    if (onUpdateStudentName) {
+      onUpdateStudentName(val);
+    }
+    setReviewerName(val);
+    setNameSaved(true);
+    setTimeout(() => setNameSaved(false), 2500);
   };
 
   // Trigger celebratory confetti if score >= 35
@@ -170,6 +183,41 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
             <span>🔥 Đã copy lời thách đấu kèm link bài thi! Hãy dán vào nhóm Zalo hoặc Facebook để đọ điểm cùng bạn bè nhé!</span>
           </div>
         )}
+      </div>
+
+      {/* Student Name Card for Leaderboard */}
+      <div className="bg-white rounded-3xl border-2 border-indigo-200 p-4 sm:p-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-soft">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700 shrink-0">
+            <User className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[11px] font-black uppercase tracking-wider text-indigo-600">
+              Tên thí sinh lưu vào Bảng Vinh Danh
+            </div>
+            <div className="text-sm sm:text-base font-black text-slate-900 mt-0.5">
+              {currentStudentName}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={currentStudentName}
+            onChange={(e) => setCurrentStudentName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSaveStudentName()}
+            placeholder="Nhập họ tên thí sinh..."
+            className="px-3.5 py-2 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-56"
+          />
+          <button
+            type="button"
+            onClick={handleSaveStudentName}
+            className="btn-3d px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shrink-0 transition"
+          >
+            {nameSaved ? '✓ Đã lưu!' : 'Lưu tên'}
+          </button>
+        </div>
       </div>
 
       {/* Direct Student Feedback Form right on Result Screen */}
@@ -359,10 +407,9 @@ export default function ResultScreen({ resultData, onRetakeExam, onViewLeaderboa
                 />
               )}
 
-              <div 
-                className="text-sm sm:text-base font-bold text-slate-900 mb-4 whitespace-pre-line leading-relaxed font-sans"
-                dangerouslySetInnerHTML={{ __html: r.content }}
-              />
+              <div className="mb-4">
+                <QuestionDisplay content={r.content} category={r.category} />
+              </div>
 
               {/* 4 Options Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-xs sm:text-sm">

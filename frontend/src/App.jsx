@@ -9,11 +9,16 @@ import AiChatDrawer from './components/AiChatDrawer';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import InstallAppModal from './components/InstallAppModal';
 import { Play, Sparkles, BookOpen, Clock, Award, ShieldCheck, ChevronRight, CheckCircle2, Flame, Target, Layers, Smartphone, Download, Video, X } from 'lucide-react';
-import { getTemplates, getTemplateExam, generateRandomExam, submitExam } from './services/dataService';
+import { getTemplates, getTemplateExam, generateRandomExam, submitExam, getStoredStudentName, setStoredStudentName } from './services/dataService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('mock'); // 'mock' | 'practice' | 'result' | 'leaderboard' | 'analytics' | 'admin'
-  const [studentName, setStudentName] = useState('Thí sinh HSA');
+  const [studentName, setStudentName] = useState(() => getStoredStudentName());
+
+  const handleUpdateStudentName = (newName) => {
+    const saved = setStoredStudentName(newName);
+    setStudentName(saved);
+  };
   const [templates, setTemplates] = useState([]);
   const [loadingExam, setLoadingExam] = useState(false);
   const [installModalOpen, setInstallModalOpen] = useState(false);
@@ -89,7 +94,8 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         studentName={studentName}
-        setStudentName={setStudentName}
+        setStudentName={handleUpdateStudentName}
+        onUpdateStudentName={handleUpdateStudentName}
         isExamActive={!!activeExam}
         onOpenInstallModal={() => setInstallModalOpen(true)}
       />
@@ -271,6 +277,8 @@ export default function App() {
         {activeTab === 'result' && examResult && (
           <ResultScreen
             resultData={examResult}
+            studentName={studentName}
+            onUpdateStudentName={handleUpdateStudentName}
             onRetakeExam={() => {
               setExamResult(null);
               handleStartRandomExam();
@@ -283,7 +291,7 @@ export default function App() {
 
         {/* TAB 4: LEADERBOARD */}
         {activeTab === 'leaderboard' && (
-          <Leaderboard studentName={studentName} />
+          <Leaderboard studentName={studentName} onUpdateStudentName={handleUpdateStudentName} />
         )}
 
         {/* TAB 5: ANALYTICS & IMPACT REPORT */}

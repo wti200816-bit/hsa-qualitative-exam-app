@@ -1,11 +1,11 @@
-const CACHE_NAME = 'hsa-master-v6';
+const CACHE_NAME = 'hsa-master-v9_20261109';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './data/hsa_data.js?v=20261022_v6'
+  './favicon.svg'
 ];
 
 self.addEventListener('install', (event) => {
@@ -25,6 +25,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('Purging old cache:', key);
             return caches.delete(key);
           }
         })
@@ -38,7 +39,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (event.request.url.includes('ntfy.sh')) return;
 
-  // Network-First strategy so updates to hsa_data.js and app bundles are always reflected immediately when online
+  // Network-First strategy so updates to hsa_data and app bundles are ALWAYS fetched fresh from network
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {

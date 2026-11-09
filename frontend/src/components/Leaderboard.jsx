@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Award, Trophy, Medal, Zap, Clock, UserCheck, Flame, ArrowUpRight, Crown, Sparkles, Share2, Check, RefreshCw, Calendar } from 'lucide-react';
 import { getLeaderboard, syncCloudData, formatDateVN } from '../services/dataService';
 
-export default function Leaderboard({ studentName }) {
+export default function Leaderboard({ studentName, onUpdateStudentName }) {
   const [tab, setTab] = useState('mock'); // 'mock' | 'stats'
   const [timeframe, setTimeframe] = useState('all'); // 'today' | 'all'
   const [leaderboard, setLeaderboard] = useState([]);
@@ -10,6 +10,22 @@ export default function Leaderboard({ studentName }) {
   const [todayCount, setTodayCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [challengeCopied, setChallengeCopied] = useState(false);
+  const [editName, setEditName] = useState(studentName || 'Thí sinh HSA');
+  const [nameSavedToast, setNameSavedToast] = useState(false);
+
+  useEffect(() => {
+    if (studentName) setEditName(studentName);
+  }, [studentName]);
+
+  const handleSaveStudentName = () => {
+    const val = editName.trim() || 'Thí sinh HSA';
+    if (onUpdateStudentName) {
+      onUpdateStudentName(val);
+    }
+    setNameSavedToast(true);
+    setTimeout(() => setNameSavedToast(false), 2500);
+    setTimeout(() => loadLeaderboardData(), 300);
+  };
 
   const loadLeaderboardData = () => {
     try {
@@ -128,6 +144,56 @@ export default function Leaderboard({ studentName }) {
           >
             <Flame className="w-4 h-4 text-rose-400" />
             <span>Chăm chỉ Tích luỹ</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Student Rank & Name Edit Banner */}
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-4 sm:p-5 rounded-3xl border-2 border-indigo-200/80 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <img
+            src={getAvatar(studentName)}
+            alt="Avatar"
+            className="w-12 h-12 rounded-2xl bg-white border-2 border-indigo-200 p-0.5 shadow-xs shrink-0"
+          />
+          <div>
+            <div className="text-[10px] font-black uppercase text-indigo-700 tracking-wider flex items-center gap-1.5">
+              <span>👤 HỒ SƠ CỦA BẠN TRÊN BẢNG VINH DANH</span>
+              {myRank !== '--' && (
+                <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-black">
+                  Đang trong BXH
+                </span>
+              )}
+            </div>
+            <div className="text-base sm:text-lg font-black text-slate-900 mt-0.5 flex flex-wrap items-center gap-2">
+              <span>{studentName}</span>
+              {myRank !== '--' ? (
+                <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white font-black text-xs shadow-xs">
+                  🏆 Hạng #{myRank} Toàn Quốc
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-slate-500">
+                  (Hoàn thành 1 bài thi để vinh danh thứ hạng của bạn!)
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 bg-white p-1.5 pl-3 rounded-2xl border border-indigo-200 shadow-2xs self-stretch sm:self-auto">
+          <input
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSaveStudentName()}
+            placeholder="Gõ tên để hiển thị trên BXH..."
+            className="text-xs font-black text-slate-900 bg-transparent focus:outline-none w-full sm:w-48"
+          />
+          <button
+            onClick={handleSaveStudentName}
+            className="btn-3d px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shrink-0 shadow-xs active:scale-95 transition"
+          >
+            {nameSavedToast ? '✓ Đã lưu!' : 'Lưu tên'}
           </button>
         </div>
       </div>

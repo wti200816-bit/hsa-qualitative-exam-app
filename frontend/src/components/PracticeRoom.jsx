@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BookOpen, Check, X, Eye, EyeOff, Bot, ChevronLeft, ChevronRight, Sparkles, RefreshCw, PenTool, SearchCheck, Layers, FileText } from 'lucide-react';
+import QuestionDisplay from './QuestionDisplay';
 import { getPracticeCategories, getPracticeQuestions } from '../services/dataService';
 
 export default function PracticeRoom({ onOpenAiChat }) {
@@ -259,9 +260,14 @@ export default function PracticeRoom({ onOpenAiChat }) {
               {/* Left: Book Reading Pane */}
               <div className={`md:col-span-6 rounded-2xl border-2 p-5 flex flex-col max-h-[640px] shadow-inner ${themeClasses[passageTheme]}`}>
                 <div className="flex items-center justify-between pb-3 border-b border-current/15 mb-3 gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-800 line-clamp-1">
-                    {curQ.passage_title || 'Ngữ liệu Văn bản'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-lg bg-amber-500 text-white font-black text-xs uppercase shadow-xs flex items-center gap-1.5 shrink-0">
+                      📖 PHẦN ĐỀ: NGỮ LIỆU ĐỌC HIỂU
+                    </span>
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-800 line-clamp-1">
+                      {curQ.passage_title || 'Ngữ liệu Văn bản'}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={() => setFontSize(fontSize === 'text-lg' ? 'text-base' : fontSize === 'text-base' ? 'text-sm' : 'text-sm')}
@@ -338,10 +344,7 @@ export default function PracticeRoom({ onOpenAiChat }) {
                     </div>
                   )}
 
-                  <div 
-                    className="text-sm font-bold text-slate-900 mb-4 leading-relaxed whitespace-pre-line"
-                    dangerouslySetInnerHTML={{ __html: curQ.content }}
-                  />
+                  <QuestionDisplay content={curQ.content} category={curQ.category} />
 
                   {/* 3D Options */}
                   <div className="space-y-2.5">
@@ -452,10 +455,7 @@ export default function PracticeRoom({ onOpenAiChat }) {
                   </button>
                 </div>
 
-                <div 
-                  className="text-base sm:text-lg font-bold text-slate-900 mb-6 leading-relaxed whitespace-pre-line"
-                  dangerouslySetInnerHTML={{ __html: curQ.content }}
-                />
+                <QuestionDisplay content={curQ.content} category={curQ.category} />
 
                 {/* 3D Tactile Options */}
                 <div className="space-y-3.5">

@@ -478,16 +478,16 @@ function shuffle(array) {
 export async function loadHsaData() {
   if (cachedData) return cachedData;
 
-  // Check if preloaded in window.HSA_DATA
-  if (typeof window !== 'undefined' && window.HSA_DATA) {
-    cachedData = window.HSA_DATA;
+  // Check if preloaded in window.__HSA_DATA__ or window.HSA_DATA
+  if (typeof window !== 'undefined' && (window.__HSA_DATA__ || window.HSA_DATA)) {
+    cachedData = window.__HSA_DATA__ || window.HSA_DATA;
     applyOverrides(cachedData);
     return cachedData;
   }
 
-  // Fallback to fetch json
+  // Fallback to fetch json with cache-busting timestamp
   try {
-    const res = await fetch('./data/hsa_data.json');
+    const res = await fetch(`./data/hsa_data.json?t=${Date.now()}`);
     if (res.ok) {
       cachedData = await res.json();
       applyOverrides(cachedData);
@@ -496,7 +496,7 @@ export async function loadHsaData() {
   } catch (err) {
     console.warn('Could not fetch ./data/hsa_data.json, trying /data/hsa_data.json:', err);
     try {
-      const res2 = await fetch('/data/hsa_data.json');
+      const res2 = await fetch(`/data/hsa_data.json?t=${Date.now()}`);
       if (res2.ok) {
         cachedData = await res2.json();
         applyOverrides(cachedData);
@@ -545,17 +545,28 @@ export async function getTemplateExam(templateId) {
   if (!tpl) throw new Error('Không tìm thấy đề thi mẫu: ' + templateId);
 
   const questions = [];
-  (tpl.question_ids || []).forEach((qId, idx) => {
+  const seenSigs = new Set();
+  const norm = (str) => (str || '').toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+
+  (tpl.question_ids || []).forEach((qId) => {
     const q = data.questions[qId];
     if (q) {
-      const passage = q.passage_id ? data.passages[q.passage_id] : null;
-      questions.push({
-        ...q,
-        order_num: 51 + idx,
-        passage_title: passage ? passage.title : null,
-        passage_content: passage ? passage.content : null
-      });
+      const sig = `${norm(q.content)}||${norm(q.option_a)}||${norm(q.option_b)}`;
+      if (!seenSigs.has(sig)) {
+        seenSigs.add(sig);
+        const passage = q.passage_id ? data.passages[q.passage_id] : null;
+        questions.push({
+          ...q,
+          passage_title: passage ? passage.title : null,
+          passage_content: passage ? passage.content : null
+        });
+      }
     }
+  });
+
+  // Re-index order numbers from 51 to 100
+  questions.forEach((q, idx) => {
+    q.order_num = 51 + idx;
   });
 
   return {
@@ -567,15 +578,37 @@ export async function getTemplateExam(templateId) {
   };
 }
 
-// 3. Generate Random Mock Exam (Standard 50 Questions HSA 2026 Matrix)
+// 3. Generate Random Mock Exam (Standard 50 Questions HSA 2026 Matrix with Strict Anti-Duplication Guard)
 export async function generateRandomExam(studentName = "Thí sinh") {
   const data = await loadHsaData();
   const allQs = Object.values(data.questions).filter(q => q.status === 'verified');
 
-  // Nhóm 1: 15 TV (5 TV1 + 5 TV2 + 5 TV3)
-  const tv1 = shuffle(allQs.filter(q => q.category === 'TV1')).slice(0, 5);
-  const tv2 = shuffle(allQs.filter(q => q.category === 'TV2')).slice(0, 5);
-  const tv3 = shuffle(allQs.filter(q => q.category === 'TV3')).slice(0, 5);
+  // Anti-duplication tracker so no two questions in the same generated exam have identical content or options
+  const seenSignatures = new Set();
+  const getSignature = (q) => {
+    if (!q) return '';
+    const norm = (str) => (str || '').toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+    return `${norm(q.content)}||${norm(q.option_a)}||${norm(q.option_b)}`;
+  };
+
+  const pickUnique = (list, count) => {
+    const picked = [];
+    const shuffled = shuffle(list);
+    for (const q of shuffled) {
+      const sig = getSignature(q);
+      if (!seenSignatures.has(sig)) {
+        seenSignatures.add(sig);
+        picked.push(q);
+        if (picked.length === count) break;
+      }
+    }
+    return picked;
+  };
+
+  // Nhóm 1: 15 TV (5 TV1 + 5 TV2 + 5 TV3) - Strictly Deduplicated
+  const tv1 = pickUnique(allQs.filter(q => q.category === 'TV1'), 5);
+  const tv2 = pickUnique(allQs.filter(q => q.category === 'TV2'), 5);
+  const tv3 = pickUnique(allQs.filter(q => q.category === 'TV3'), 5);
   const group1 = [...tv1, ...tv2, ...tv3].map(q => ({
     ...q,
     passage_id: null,
@@ -583,9 +616,9 @@ export async function generateRandomExam(studentName = "Thí sinh") {
     passage_content: null
   }));
 
-  // Nhóm 2: 10 Short Reading questions (R1)
+  // Nhóm 2: 10 Short Reading questions (R1) - Strictly Deduplicated
   const r1List = allQs.filter(q => q.category === 'R1');
-  const group2 = shuffle(r1List).slice(0, 10).map(q => {
+  const group2 = pickUnique(r1List, 10).map(q => {
     const passage = q.passage_id ? data.passages[q.passage_id] : null;
     return {
       ...q,
@@ -614,6 +647,7 @@ export async function generateRandomExam(studentName = "Thí sinh") {
       .slice(0, 5);
 
     childQs.forEach(q => {
+      seenSignatures.add(getSignature(q));
       group3.push({
         ...q,
         passage_id: pId,
@@ -1197,3 +1231,62 @@ Câu hỏi của học sinh: ${message || 'Hãy giải thích cặn kẽ câu n�
   lines.push("\n*(Mẹo: Bạn có thể cài đặt **Google Gemini API Key** riêng trong mục cài đặt để AI giải thích tự do mở rộng hơn)*");
   return lines.join("\n");
 }
+
+// ==========================================
+// STUDENT PROFILE & LEADERBOARD NAME HELPERS
+// ==========================================
+
+export function getStoredStudentName() {
+  try {
+    return localStorage.getItem('hsa_student_name') || 'Thí sinh HSA';
+  } catch (e) {
+    return 'Thí sinh HSA';
+  }
+}
+
+export function setStoredStudentName(name) {
+  try {
+    const cleanName = (name || '').trim() || 'Thí sinh HSA';
+    localStorage.setItem('hsa_student_name', cleanName);
+    
+    // Update existing local submissions with this name if they had default name
+    const existing = JSON.parse(localStorage.getItem('hsa_submissions') || '[]');
+    let changed = false;
+    existing.forEach(sub => {
+      if (!sub.student_name || sub.student_name === 'Thí sinh HSA' || sub.student_name === 'Thí sinh') {
+        sub.student_name = cleanName;
+        changed = true;
+      }
+    });
+    if (changed) {
+      localStorage.setItem('hsa_submissions', JSON.stringify(existing));
+    }
+
+    // Update statsMap
+    const statsMap = JSON.parse(localStorage.getItem('hsa_student_stats') || '{}');
+    if (statsMap['Thí sinh HSA'] && cleanName !== 'Thí sinh HSA') {
+      const rec = statsMap['Thí sinh HSA'];
+      rec.student_name = cleanName;
+      statsMap[cleanName] = rec;
+      delete statsMap['Thí sinh HSA'];
+      localStorage.setItem('hsa_student_stats', JSON.stringify(statsMap));
+    }
+
+    // Push cloud sync
+    pushToCloudSync({ type: 'profile_update', student_name: cleanName });
+    return cleanName;
+  } catch (e) {
+    return name;
+  }
+}
+
+export function updateStudentSubmissionName(newName) {
+  try {
+    const cleanName = (newName || '').trim();
+    if (!cleanName) return;
+    return setStoredStudentName(cleanName);
+  } catch (e) {
+    console.error(e);
+  }
+}
+

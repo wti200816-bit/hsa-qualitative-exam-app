@@ -3,10 +3,28 @@ import { BookOpen, Award, CheckCircle2, ShieldCheck, User, Sparkles, Menu, X, Fl
 import ShareModal from './ShareModal';
 import InstallAppModal from './InstallAppModal';
 
-export default function Navbar({ activeTab, setActiveTab, studentName, setStudentName, isExamActive, onOpenInstallModal }) {
+export default function Navbar({ activeTab, setActiveTab, studentName, setStudentName, onUpdateStudentName, isExamActive, onOpenInstallModal }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [installModalOpenInternal, setInstallModalOpenInternal] = useState(false);
+  const [editName, setEditName] = useState(studentName || 'Thí sinh HSA');
+  const [savedToast, setSavedToast] = useState(false);
+
+  React.useEffect(() => {
+    if (studentName) setEditName(studentName);
+  }, [studentName]);
+
+  const handleSaveName = () => {
+    const val = editName.trim() || 'Thí sinh HSA';
+    if (onUpdateStudentName) {
+      onUpdateStudentName(val);
+    } else if (setStudentName) {
+      setStudentName(val);
+    }
+    setSavedToast(true);
+    setTimeout(() => setSavedToast(false), 2500);
+  };
+
   const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(studentName || 'HSA')}&backgroundColor=e0e7ff,c7d2fe`;
 
   const handleOpenInstall = () => {
@@ -96,24 +114,41 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
               <span>Chia sẻ / QR</span>
             </button>
 
-            <div className="flex items-center gap-2.5 bg-white pl-2 pr-3 py-1.5 rounded-2xl border-2 border-slate-200 shadow-2xs hover:border-indigo-300 transition">
+            <div className="flex items-center gap-2 bg-white pl-2.5 pr-2 py-1.5 rounded-2xl border-2 border-slate-200 shadow-2xs hover:border-indigo-300 transition">
               <img
                 src={avatarUrl}
                 alt="Avatar"
-                className="w-8 h-8 rounded-xl bg-indigo-50 p-0.5 border border-indigo-200 shadow-2xs"
+                className="w-8 h-8 rounded-xl bg-indigo-50 p-0.5 border border-indigo-200 shadow-2xs shrink-0"
               />
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-slate-400 leading-none">Thí sinh</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] uppercase font-black text-indigo-600 leading-none">Thí sinh</span>
+                  {savedToast && (
+                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1 rounded animate-pulse">
+                      ✓ Đã lưu BXH
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   disabled={isExamActive}
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value || 'Thí sinh')}
-                  className="bg-transparent text-xs font-extrabold text-slate-800 w-24 sm:w-28 focus:outline-none focus:ring-0 truncate"
-                  placeholder="Tên của bạn"
-                  title="Nhập tên thí sinh để lưu thành tích"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onBlur={handleSaveName}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                  className="bg-transparent text-xs font-black text-slate-800 w-28 sm:w-36 focus:outline-none focus:bg-slate-50 focus:rounded px-1 truncate"
+                  placeholder="Gõ tên để vinh danh..."
+                  title="Gõ tên bạn và nhấn Lưu để xếp hạng Bảng Vinh Danh"
                 />
               </div>
+              <button
+                onClick={handleSaveName}
+                disabled={isExamActive}
+                className="px-2.5 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-[11px] shadow-xs active:scale-95 transition shrink-0"
+                title="Lưu tên vào Bảng Vinh Danh"
+              >
+                {savedToast ? '✓' : 'Lưu'}
+              </button>
             </div>
           </div>
 
@@ -138,6 +173,29 @@ export default function Navbar({ activeTab, setActiveTab, studentName, setStuden
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-3 border-t border-slate-100 flex flex-col space-y-2 animate-in slide-in-from-top-2">
+            {/* Mobile Student Profile Input */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-indigo-50/70 border border-indigo-200">
+              <div className="flex items-center gap-2.5">
+                <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-xl bg-white border border-indigo-200 p-0.5" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-black text-indigo-700">Tên Thí Sinh Vinh Danh</span>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                    className="text-xs font-black text-slate-900 bg-white px-2 py-1 rounded-lg border border-slate-200 w-40"
+                    placeholder="Gõ tên để vinh danh..."
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleSaveName}
+                className="btn-3d px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-black shrink-0"
+              >
+                {savedToast ? '✓ Đã lưu' : 'Lưu tên'}
+              </button>
+            </div>
             <button
               onClick={() => {
                 handleOpenInstall();
