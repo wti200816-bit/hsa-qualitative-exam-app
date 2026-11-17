@@ -9,7 +9,7 @@ import AiChatDrawer from './components/AiChatDrawer';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 import InstallAppModal from './components/InstallAppModal';
 import { Play, Sparkles, BookOpen, Clock, Award, ShieldCheck, ChevronRight, CheckCircle2, Flame, Target, Layers, Smartphone, Download, Video, X } from 'lucide-react';
-import { getTemplates, getTemplateExam, generateRandomExam, submitExam, getStoredStudentName, setStoredStudentName } from './services/dataService';
+import { getTemplates, getTemplateExam, generateRandomExam, submitExam, getStoredStudentName, setStoredStudentName, getQuestionBankStats, DEFAULT_QUESTION_BANK_STATS } from './services/dataService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('mock'); // 'mock' | 'practice' | 'result' | 'leaderboard' | 'analytics' | 'admin'
@@ -20,6 +20,7 @@ export default function App() {
     setStudentName(saved);
   };
   const [templates, setTemplates] = useState([]);
+  const [questionStats, setQuestionStats] = useState(() => DEFAULT_QUESTION_BANK_STATS);
   const [loadingExam, setLoadingExam] = useState(false);
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
@@ -32,11 +33,15 @@ export default function App() {
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [chatQuestionContext, setChatQuestionContext] = useState(null);
 
-  // Load standardized exam templates
+  // Load standardized exam templates & question stats
   useEffect(() => {
     getTemplates()
       .then((data) => setTemplates(data || []))
       .catch((err) => console.error('Error fetching templates:', err));
+
+    getQuestionBankStats()
+      .then((data) => data && setQuestionStats(data))
+      .catch((err) => console.error('Error fetching question stats:', err));
   }, []);
 
   // Start Randomized 50-Question Mock Exam
@@ -172,11 +177,18 @@ export default function App() {
                   {/* Stat Card 2 */}
                   <div className="bg-white rounded-3xl border-2 border-slate-200/80 p-5 shadow-soft flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                        Ngân hàng Câu hỏi
-                      </span>
-                      <div className="text-3xl font-black text-slate-900 mt-1">4.128 Câu</div>
-                      <p className="text-xs text-slate-500 font-medium">100% có đáp án & lời giải</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                          Ngân hàng Câu hỏi
+                        </span>
+                        <span className="text-[10px] font-black uppercase text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded-md border border-rose-200">
+                          +62 câu mới
+                        </span>
+                      </div>
+                      <div className="text-3xl font-black text-slate-900 mt-1">
+                        {questionStats.total.toLocaleString()} Câu
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">100% có đáp án & lời giải chi tiết</p>
                     </div>
                     <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-200 shrink-0">
                       <Target className="w-6 h-6" />

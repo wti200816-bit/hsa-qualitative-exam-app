@@ -16,22 +16,34 @@ import {
   Lightbulb,
   FileSpreadsheet,
   RefreshCw,
-  Calendar
+  Calendar,
+  Database,
+  PieChart,
+  BookOpen,
+  Target,
+  ShieldCheck,
+  Table
 } from 'lucide-react';
 import {
   getAnalyticsData,
   getStudentFeedbacks,
   submitStudentFeedback,
-  syncCloudData
+  syncCloudData,
+  getQuestionBankStats,
+  DEFAULT_QUESTION_BANK_STATS
 } from '../services/dataService';
 
 export default function AnalyticsDashboard({ studentName }) {
   const lineChartRef = useRef(null);
   const barChartRef = useRef(null);
-  const chartInstances = useRef({ line: null, bar: null });
+  const doughnutChartRef = useRef(null);
+  const chartInstances = useRef({ line: null, bar: null, doughnut: null });
 
   const [analytics, setAnalytics] = useState(() => getAnalyticsData());
   const [feedbacks, setFeedbacks] = useState(() => getStudentFeedbacks());
+  const [qBankStats, setQBankStats] = useState(() => DEFAULT_QUESTION_BANK_STATS);
+  const [selectedCategoryCode, setSelectedCategoryCode] = useState(null);
+  const [showMatrixTable, setShowMatrixTable] = useState(true);
   const [reviewDateFilter, setReviewDateFilter] = useState('all'); // 'all' | 'yesterday' | 'today'
   const [syncing, setSyncing] = useState(false);
 
@@ -45,6 +57,7 @@ export default function AnalyticsDashboard({ studentName }) {
   const refreshAllData = () => {
     setAnalytics(getAnalyticsData());
     setFeedbacks(getStudentFeedbacks());
+    getQuestionBankStats().then(data => data && setQBankStats(data)).catch(console.error);
   };
 
   const handleCloudSync = async () => {
@@ -75,6 +88,7 @@ export default function AnalyticsDashboard({ studentName }) {
       // Clean existing
       if (chartInstances.current.line) chartInstances.current.line.destroy();
       if (chartInstances.current.bar) chartInstances.current.bar.destroy();
+      if (chartInstances.current.doughnut) chartInstances.current.doughnut.destroy();
 
       // 1. Line Chart: Sự tiến bộ điểm số qua 5 lần luyện đề
       if (lineChartRef.current) {
@@ -199,6 +213,55 @@ export default function AnalyticsDashboard({ studentName }) {
           }
         });
       }
+
+      // 3. Doughnut Chart: Cơ cấu 5 chuyên đề ngân hàng câu hỏi
+      if (doughnutChartRef.current && qBankStats?.categories?.length) {
+        const ctxDoughnut = doughnutChartRef.current.getContext('2d');
+        chartInstances.current.doughnut = new Chart(ctxDoughnut, {
+          type: 'doughnut',
+          data: {
+            labels: qBankStats.categories.map(c => c.shortTitle),
+            datasets: [
+              {
+                data: qBankStats.categories.map(c => c.totalCount),
+                backgroundColor: [
+                  '#8B5CF6', // RC: Violet
+                  '#10B981', // R1: Emerald
+                  '#F59E0B', // TV1: Amber
+                  '#F43F5E', // TV3: Rose
+                  '#3B82F6'  // TV2: Blue
+                ],
+                borderColor: '#ffffff',
+                borderWidth: 3,
+                hoverOffset: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: '#1E293B',
+                padding: 12,
+                cornerRadius: 12,
+                titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+                bodyFont: { family: 'Plus Jakarta Sans', size: 11 },
+                callbacks: {
+                  label: (ctx) => {
+                    const total = qBankStats.total || 4190;
+                    const val = ctx.raw || 0;
+                    const pct = ((val / total) * 100).toFixed(1);
+                    return ` ${ctx.label}: ${val.toLocaleString()} câu (${pct}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
     };
 
     if (window.Chart) {
@@ -216,8 +279,9 @@ export default function AnalyticsDashboard({ studentName }) {
     return () => {
       if (chartInstances.current.line) chartInstances.current.line.destroy();
       if (chartInstances.current.bar) chartInstances.current.bar.destroy();
+      if (chartInstances.current.doughnut) chartInstances.current.doughnut.destroy();
     };
-  }, [analytics]);
+  }, [analytics, qBankStats]);
 
   const handlePrint = () => {
     window.print();
@@ -375,6 +439,321 @@ export default function AnalyticsDashboard({ studentName }) {
             Cập nhật ngày {analytics.todayStr} từ {feedbacks.length} ý kiến phản hồi thực tế của thí sinh.
           </p>
         </div>
+      </div>
+
+      {/* SECTION: BÁO CÁO THỐNG KÊ NGÂN HÀNG CÂU HỎI & MA TRẬN ĐỀ HSA */}
+      <div className="bg-white rounded-3xl border-2 border-slate-200/80 shadow-soft p-6 sm:p-8 mb-10">
+        {/* Section Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider">
+                <Database className="w-3.5 h-3.5 text-blue-600" />
+                Kho Học Liệu Số Hóa HSA Master 2026
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
+                <Sparkles className="w-3.5 h-3.5 text-rose-500" />
+                Vừa cập nhật +{qBankStats.newlyAddedCount || 62} câu TV3 mới
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                100% Có Lời Giải & Đáp Án
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+              <PieChart className="w-7 h-7 text-indigo-600" />
+              <span>Thống Kê Cơ Cấu Ngân Hàng Câu Hỏi & Độ Bao Phủ Ma Trận</span>
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-4xl leading-relaxed">
+              Tổng quan định lượng {qBankStats.total.toLocaleString()} câu hỏi trắc nghiệm khách quan được số hóa, thẩm định và đối chiếu theo ma trận Phần thi Tư duy Định tính ĐGNL ĐHQGHN (HSA).
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start lg:self-auto no-print">
+            <button
+              onClick={() => setShowMatrixTable(!showMatrixTable)}
+              className="btn-3d flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs transition"
+            >
+              <Table className="w-3.5 h-3.5 text-slate-600" />
+              <span>{showMatrixTable ? 'Thu gọn bảng ma trận' : 'Xem bảng ma trận chi tiết'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Overview Mini Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+          <div className="bg-gradient-to-br from-indigo-50/70 to-blue-50/50 rounded-2xl p-4 sm:p-5 border border-indigo-100/90">
+            <div className="text-[11px] font-black uppercase text-indigo-700 tracking-wider flex items-center justify-between">
+              <span>Tổng số câu hỏi</span>
+              <Target className="w-4 h-4 text-indigo-600" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 mt-1.5">
+              {qBankStats.total.toLocaleString()}
+            </div>
+            <div className="text-[11px] text-indigo-600 font-bold mt-1 flex items-center gap-1">
+              <span>+{qBankStats.newlyAddedCount || 62} câu TV3 chuyên đề mới</span>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/50 rounded-2xl p-4 sm:p-5 border border-emerald-100/90">
+            <div className="text-[11px] font-black uppercase text-emerald-700 tracking-wider flex items-center justify-between">
+              <span>Đã chuẩn hóa (Verified)</span>
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-emerald-700 mt-1.5">
+              {qBankStats.verified.toLocaleString()}
+            </div>
+            <div className="text-[11px] text-emerald-700 font-bold mt-1">
+              Sẵn sàng 100% cho 50 đề & luyện tập
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-violet-50/70 to-purple-50/50 rounded-2xl p-4 sm:p-5 border border-violet-100/90">
+            <div className="text-[11px] font-black uppercase text-violet-700 tracking-wider flex items-center justify-between">
+              <span>Hệ thống Đề thi</span>
+              <BookOpen className="w-4 h-4 text-violet-600" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-violet-700 mt-1.5">
+              {qBankStats.templatesCount} Đề
+            </div>
+            <div className="text-[11px] text-violet-700 font-bold mt-1">
+              {qBankStats.totalQuestionsInTemplates.toLocaleString()} câu hỏi theo chuẩn ma trận
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-amber-50/70 to-orange-50/50 rounded-2xl p-4 sm:p-5 border border-amber-100/90">
+            <div className="text-[11px] font-black uppercase text-amber-800 tracking-wider flex items-center justify-between">
+              <span>Hệ số bao phủ đề thi</span>
+              <Layers className="w-4 h-4 text-amber-600" />
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-amber-700 mt-1.5">
+              {qBankStats.overallCoverageRatio}x
+            </div>
+            <div className="text-[11px] text-amber-800 font-bold mt-1">
+              Đề ngẫu nhiên đa dạng, không trùng lặp
+            </div>
+          </div>
+        </div>
+
+        {/* 2 Columns: Doughnut Chart & Breakdown Progress List */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center mb-8">
+          {/* Doughnut Chart on Left */}
+          <div className="lg:col-span-5 bg-slate-50/80 rounded-2xl p-5 border border-slate-200/80 flex flex-col items-center justify-center relative">
+            <div className="w-full flex items-center justify-between mb-2">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <PieChart className="w-4 h-4 text-indigo-600" />
+                Cơ cấu tỷ lệ 5 Chuyên đề
+              </span>
+              <span className="text-[11px] font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                100% Chuẩn HSA
+              </span>
+            </div>
+
+            <div className="h-56 sm:h-64 w-full relative flex items-center justify-center my-2">
+              <canvas ref={doughnutChartRef}></canvas>
+              {/* Doughnut Center Label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  {qBankStats.total.toLocaleString()}
+                </span>
+                <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
+                  Tổng Câu Hỏi
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Legend Chips */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2 w-full">
+              {qBankStats.categories.map((cat) => (
+                <button
+                  key={cat.code}
+                  onClick={() => setSelectedCategoryCode(selectedCategoryCode === cat.code ? null : cat.code)}
+                  className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition flex items-center gap-1.5 ${
+                    selectedCategoryCode === cat.code
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.barColor }}></span>
+                  <span>{cat.shortTitle}</span>
+                  <span className="font-black text-slate-900 text-[10px] opacity-80">{cat.percentage}%</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Detailed Progress Bars List on Right */}
+          <div className="lg:col-span-7 flex flex-col gap-3">
+            {qBankStats.categories.map((cat) => {
+              const isSelected = selectedCategoryCode === cat.code;
+              return (
+                <div
+                  key={cat.code}
+                  onClick={() => setSelectedCategoryCode(selectedCategoryCode === cat.code ? null : cat.code)}
+                  className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${
+                    isSelected
+                      ? 'bg-indigo-50/50 border-indigo-400 shadow-sm ring-2 ring-indigo-500/20'
+                      : 'bg-white border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[11px] font-black px-2 py-0.5 rounded-lg border ${cat.badgeBg}`}>
+                        {cat.code}
+                      </span>
+                      <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight">
+                        {cat.title}
+                      </h4>
+                      {cat.isNewUpdated && (
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">
+                          +62 câu mới
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-sm sm:text-base font-black text-slate-900">
+                        {cat.totalCount.toLocaleString()}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-400 ml-1">
+                        ({cat.percentage}%)
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 line-clamp-1 mb-2">
+                    {cat.desc}
+                  </p>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden flex">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${cat.percentage}%`,
+                        backgroundColor: cat.barColor
+                      }}
+                    ></div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold mt-1.5">
+                    <span>1 đề thi gồm: <strong className="text-slate-700">{cat.examPerTest} câu</strong></span>
+                    <span>Hệ số bao phủ: <strong className="text-indigo-600">{cat.coverageRatio}x</strong> lần đề thi</span>
+                    <span>Đã thẩm định: <strong className="text-emerald-600">{cat.verifiedCount.toLocaleString()} câu</strong></span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Ma Trận Đối Chiếu Chi Tiết Đề Thi Chuẩn vs Ngân Hàng */}
+        {showMatrixTable && (
+          <div className="bg-slate-50/90 rounded-2xl p-4 sm:p-5 border border-slate-200/90 overflow-x-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
+                <span>Bảng Đối Chiếu Ma Trận Đề Thi HSA 2026 & Quy Mô Ngân Hàng Câu Hỏi</span>
+              </h3>
+              <span className="text-[11px] text-slate-500 font-bold">
+                Cập nhật ngày {analytics.todayStr}
+              </span>
+            </div>
+
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-wider">
+                  <th className="py-2.5 px-3">Phần thi / Chuyên đề</th>
+                  <th className="py-2.5 px-3">Mã dạng bài</th>
+                  <th className="py-2.5 px-3 text-center">Cấu trúc 1 Đề HSA</th>
+                  <th className="py-2.5 px-3 text-center">Kho Câu Hỏi Hệ Thống</th>
+                  <th className="py-2.5 px-3 text-center">Hệ số dự phòng & bao phủ</th>
+                  <th className="py-2.5 px-3 text-center">Lời giải chi tiết</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200/80 font-medium text-slate-700">
+                <tr className="hover:bg-white/80 transition">
+                  <td className="py-3 px-3 font-bold text-slate-900">
+                    Tiếng Việt 1: Chọn từ không cùng nhóm
+                  </td>
+                  <td className="py-3 px-3"><span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 font-black text-[10px]">TV1</span></td>
+                  <td className="py-3 px-3 text-center font-bold">5 câu (10%)</td>
+                  <td className="py-3 px-3 text-center font-black text-slate-900">729 câu</td>
+                  <td className="py-3 px-3 text-center text-indigo-600 font-bold">145,8 lần</td>
+                  <td className="py-3 px-3 text-center text-emerald-600 font-bold">100% Đầy đủ</td>
+                </tr>
+                <tr className="hover:bg-white/80 transition">
+                  <td className="py-3 px-3 font-bold text-slate-900">
+                    Tiếng Việt 2: Điền từ vào chỗ trống
+                  </td>
+                  <td className="py-3 px-3"><span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-black text-[10px]">TV2</span></td>
+                  <td className="py-3 px-3 text-center font-bold">5 câu (10%)</td>
+                  <td className="py-3 px-3 text-center font-black text-slate-900">370 câu</td>
+                  <td className="py-3 px-3 text-center text-indigo-600 font-bold">74,0 lần</td>
+                  <td className="py-3 px-3 text-center text-emerald-600 font-bold">100% Đầy đủ</td>
+                </tr>
+                <tr className="hover:bg-white/80 transition bg-rose-50/30">
+                  <td className="py-3 px-3 font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>Tiếng Việt 3: Xác định từ/câu dùng sai</span>
+                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 border border-rose-200">+62 mới</span>
+                  </td>
+                  <td className="py-3 px-3"><span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-black text-[10px]">TV3</span></td>
+                  <td className="py-3 px-3 text-center font-bold">5 câu (10%)</td>
+                  <td className="py-3 px-3 text-center font-black text-rose-700">432 câu</td>
+                  <td className="py-3 px-3 text-center text-indigo-600 font-bold">86,4 lần</td>
+                  <td className="py-3 px-3 text-center text-emerald-600 font-bold">100% Đầy đủ</td>
+                </tr>
+                <tr className="hover:bg-white/80 transition">
+                  <td className="py-3 px-3 font-bold text-slate-900">
+                    Đọc hiểu 1: Đọc hiểu ngữ liệu ngắn
+                  </td>
+                  <td className="py-3 px-3"><span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-black text-[10px]">R1</span></td>
+                  <td className="py-3 px-3 text-center font-bold">10 câu (20%)</td>
+                  <td className="py-3 px-3 text-center font-black text-slate-900">857 câu</td>
+                  <td className="py-3 px-3 text-center text-indigo-600 font-bold">85,7 lần</td>
+                  <td className="py-3 px-3 text-center text-emerald-600 font-bold">100% Đầy đủ</td>
+                </tr>
+                <tr className="hover:bg-white/80 transition">
+                  <td className="py-3 px-3 font-bold text-slate-900">
+                    Đọc hiểu 2: Đọc hiểu văn bản chùm (5 câu/bài)
+                  </td>
+                  <td className="py-3 px-3"><span className="px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 border border-violet-200 font-black text-[10px]">RC</span></td>
+                  <td className="py-3 px-3 text-center font-bold">25 câu (50%)</td>
+                  <td className="py-3 px-3 text-center font-black text-slate-900">1.802 câu (324 ngữ liệu)</td>
+                  <td className="py-3 px-3 text-center text-indigo-600 font-bold">72,1 lần</td>
+                  <td className="py-3 px-3 text-center text-emerald-600 font-bold">100% Đầy đủ</td>
+                </tr>
+                <tr className="bg-indigo-50/80 font-black text-indigo-950 border-t-2 border-indigo-200">
+                  <td className="py-3 px-3 text-sm">
+                    TỔNG CỘNG TOÀN BỘ NGÂN HÀNG ĐỀ HSA
+                  </td>
+                  <td className="py-3 px-3">
+                    <span className="px-2 py-0.5 rounded-md bg-indigo-600 text-white font-black text-[10px]">HSA 2026</span>
+                  </td>
+                  <td className="py-3 px-3 text-center text-sm">50 câu / 60 phút</td>
+                  <td className="py-3 px-3 text-center text-base text-indigo-700 font-black">
+                    {qBankStats.total.toLocaleString()} CÂU
+                  </td>
+                  <td className="py-3 px-3 text-center text-sm text-indigo-700 font-black">
+                    {qBankStats.overallCoverageRatio} LẦN
+                  </td>
+                  <td className="py-3 px-3 text-center text-emerald-700 font-black">
+                    100% TOÀN DIỆN
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="mt-3 pt-3 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
+              <span className="flex items-center gap-1.5 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                Hệ số bao phủ trung bình 83,8 lần bảo đảm mọi đề thi tạo ngẫu nhiên đều tươi mới, không trùng lặp câu hỏi.
+              </span>
+              <span className="font-bold text-indigo-600">
+                {qBankStats.passagesCount} Bài đọc chùm • 50 Đề chuẩn hóa
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 2 CHARTS SECTION */}
